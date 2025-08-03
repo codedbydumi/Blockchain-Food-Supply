@@ -27,12 +27,12 @@ def list_products():
     # Filter products based on user role
     if current_user.role == 'farmer':
         # Farmers see products they created
-        products = current_user.products_created.paginate(
+        products = Product.query.filter_by(created_by=current_user.id).paginate(
             page=page, per_page=per_page, error_out=False
         )
     elif current_user.role in ['distributor', 'retailer']:
         # Distributors and retailers see products they own
-        products = current_user.owned_products.paginate(
+        products = Product.query.filter_by(current_owner_id=current_user.id).paginate(
             page=page, per_page=per_page, error_out=False
         )
     else:

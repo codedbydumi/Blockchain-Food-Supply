@@ -92,22 +92,25 @@ def get_user_statistics(user):
     """
     Get statistics specific to the current user
     """
+    from models.product import Product
+    from models.blockchain import Transaction
+    
     stats = {}
     
     if user.role == 'farmer':
         stats = {
-            'products_created': user.products_created.count(),
-            'active_products': user.products_created.filter(Product.status != 'expired').count(),
+            'products_created': Product.query.filter_by(created_by=user.id).count(),
+            'active_products': Product.query.filter_by(created_by=user.id).filter(Product.status != 'expired').count(),
             'total_quantity': db.session.query(func.sum(Product.quantity)).filter_by(created_by=user.id).scalar() or 0,
-            'transactions_sent': user.sent_transactions.count(),
+            'transactions_sent': Transaction.query.filter_by(from_user_id=user.id).count(),
         }
     
     elif user.role in ['distributor', 'retailer']:
         stats = {
-            'products_owned': user.owned_products.count(),
-            'transactions_sent': user.sent_transactions.count(),
-            'transactions_received': user.received_transactions.count(),
-            'products_in_transit': user.owned_products.filter_by(status='in_transit').count(),
+            'products_owned': Product.query.filter_by(current_owner_id=user.id).count(),
+            'transactions_sent': Transaction.query.filter_by(from_user_id=user.id).count(),
+            'transactions_received': Transaction.query.filter_by(to_user_id=user.id).count(),
+            'products_in_transit': Product.query.filter_by(current_owner_id=user.id, status='in_transit').count(),
         }
     
     elif user.role == 'inspector':
