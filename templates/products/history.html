@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Product History - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-history me-3"></i>Product History
+        </h1>
+        <p class="lead">
+            <span class="badge bg-primary me-2">{{ product.batch_id }}</span>
+            {{ product.name }}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Product
+        </a>
+    </div>
+</div>
+
+<!-- Blockchain Verification -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-success">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-shield-check fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Blockchain Verified</h5>
+                    <p class="mb-0">This product's history is secured and verified by blockchain technology. All transactions are immutable and tamper-proof.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+{% if history %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Complete Transaction History
+                        <span class="badge bg-light text-dark ms-2">{{ history|length }} transactions</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Block #</th>
+                                    <th>Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Location</th>
+                                    <th>Environmental</th>
+                                    <th>Date</th>
+                                    <th>Verification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in history %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-dark">{{ item.block_index }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if item.blockchain_data.transaction_type == 'create' else 'primary' if item.blockchain_data.transaction_type == 'transfer' else 'info' }}">
+                                                {{ item.blockchain_data.transaction_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if item.database_data and item.database_data.sender %}
+                                                {{ item.database_data.sender.full_name }}
+                                                <br><small class="text-muted">{{ item.database_data.sender.get_role_display() }}</small>
+                                            {% else %}
+                                                <span class="text-muted">System</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.database_data and item.database_data.receiver %}
+                                                {{ item.database_data.receiver.full_name }}
+                                                <br><small class="text-muted">{{ item.database_data.receiver.get_role_display() }}</small>
+                                            {% else %}
+                                                <span class="text-muted">System</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.blockchain_data.location %}
+                                                <i class="fas fa-map-marker-alt text-success me-1"></i>
+                                                {{ item.blockchain_data.location }}
+                                                {% if item.blockchain_data.latitude and item.blockchain_data.longitude %}
+                                                    <br><small class="text-muted">
+                                                        {{ "%.4f"|format(item.blockchain_data.latitude) }}, 
+                                                        {{ "%.4f"|format(item.blockchain_data.longitude) }}
+                                                    </small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.blockchain_data.temperature is not none %}
+                                                <i class="fas fa-thermometer-half text-danger me-1"></i>
+                                                {{ item.blockchain_data.temperature }}°C
+                                            {% endif %}
+                                            {% if item.blockchain_data.humidity is not none %}
+                                                <br><i class="fas fa-tint text-info me-1"></i>
+                                                {{ item.blockchain_data.humidity }}%
+                                            {% endif %}
+                                            {% if item.blockchain_data.temperature is none and item.blockchain_data.humidity is none %}
+                                                <span class="text-muted">No data</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ item.timestamp[:19] if item.timestamp else 'Unknown' }}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                                <div>
+                                                    <small class="text-success fw-bold">Verified</small>
+                                                    <br><small class="text-muted">Block Hash:</small>
+                                                    <br><code class="small">{{ item.block_hash[:16] }}...</code>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- No History -->
+    <div class="text-center py-5">
+        <i class="fas fa-history fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">No Transaction History</h3>
+        <p class="lead text-muted mb-4">
+            This product doesn't have any blockchain transactions yet.
+        </p>
+        <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Product
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

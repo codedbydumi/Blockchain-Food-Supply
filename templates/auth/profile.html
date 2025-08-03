@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>My Profile
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="profile-avatar mb-3">
+                            <i class="fas fa-user-circle fa-5x text-success"></i>
+                        </div>
+                        <h5 class="text-success">{{ user.full_name }}</h5>
+                        <p class="text-muted">{{ user.get_role_display() }}</p>
+                        <span class="badge bg-{{ 'success' if user.is_active else 'danger' }} mb-2">
+                            {{ 'Active' if user.is_active else 'Inactive' }}
+                        </span>
+                        {% if user.is_verified %}
+                            <br><span class="badge bg-info">Verified</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <h6 class="text-muted">ACCOUNT INFORMATION</h6>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Username:</strong></div>
+                            <div class="col-sm-8">{{ user.username }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Email:</strong></div>
+                            <div class="col-sm-8">{{ user.email }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Full Name:</strong></div>
+                            <div class="col-sm-8">{{ user.full_name }}</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Role:</strong></div>
+                            <div class="col-sm-8">
+                                <span class="badge bg-primary">{{ user.get_role_display() }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if user.company_name %}
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Company:</strong></div>
+                            <div class="col-sm-8">{{ user.company_name }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.phone %}
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Phone:</strong></div>
+                            <div class="col-sm-8">{{ user.phone }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.address %}
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>Address:</strong></div>
+                            <div class="col-sm-8">{{ user.address }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.license_number %}
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><strong>License:</strong></div>
+                            <div class="col-sm-8">{{ user.license_number }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6 class="text-muted">ACCOUNT ACTIVITY</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">Member Since:</small><br>
+                        <strong>{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Last Login:</small><br>
+                        <strong>{{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}</strong>
+                    </div>
+                </div>
+                
+                <div class="text-end mt-4">
+                    <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-success">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </a>
+                    <a href="{{ url_for('dashboard.main') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
