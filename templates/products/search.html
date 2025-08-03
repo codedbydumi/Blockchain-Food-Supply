@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Search Products - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-search me-3"></i>Search Products
+        </h1>
+        <p class="lead text-muted">Find products by name, batch ID, category, or status</p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if current_user.can_create_products() %}
+            <a href="{{ url_for('products.add_product') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Add Product
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Search Filters
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="q" class="form-label">Search Query</label>
+                            <input type="text" class="form-control" id="q" name="q" 
+                                   value="{{ current_query }}" 
+                                   placeholder="Product name, batch ID, description...">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>
+                                        {{ cat.title() }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                {% for stat in statuses %}
+                                    <option value="{{ stat }}" {% if current_status == stat %}selected{% endif %}>
+                                        {{ stat.title() }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results -->
+{% if products %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <h5 class="text-muted">
+                <i class="fas fa-list me-2"></i>
+                Found {{ products|length }} product(s)
+            </h5>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for product in products %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="position-relative">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-{{ 'success' if product.status == 'created' else 'warning' if product.status == 'in_transit' else 'info' if product.status == 'delivered' else 'danger' }}">
+                            {{ product.status.title() }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            <i class="fas fa-leaf me-2"></i>{{ product.name }}
+                        </h5>
+                        
+                        <p class="card-text text-muted">{{ product.description[:100] if product.description else 'No description' }}{% if product.description and product.description|length > 100 %}...{% endif %}</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Batch ID:</small><br>
+                                <strong class="text-primary">{{ product.batch_id }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Category:</small><br>
+                                <span class="badge bg-secondary">{{ product.category.title() }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Quantity:</small><br>
+                                <strong>{{ product.quantity }} {{ product.unit }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Quality:</small><br>
+                                {% if product.quality_score %}
+                                    <span class="badge bg-{{ 'success' if product.quality_score >= 80 else 'warning' if product.quality_score >= 60 else 'danger' }}">
+                                        {{ product.quality_score }}/100
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Not rated</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </a>
+                        {% if current_user.id == product.current_owner_id and current_user.can_transfer_products() %}
+                            <a href="{{ url_for('products.transfer_product', id=product.id) }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-exchange-alt me-2"></i>Transfer
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% elif current_query or current_category or current_status %}
+    <!-- No Results -->
+    <div class="text-center py-5">
+        <i class="fas fa-search-minus fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">No Products Found</h3>
+        <p class="lead text-muted mb-4">
+            No products match your search criteria. Try adjusting your filters.
+        </p>
+        <a href="{{ url_for('products.search_products') }}" class="btn btn-outline-primary">
+            <i class="fas fa-redo me-2"></i>Clear Search
+        </a>
+    </div>
+
+{% else %}
+    <!-- Initial State -->
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">Search for Products</h3>
+        <p class="lead text-muted mb-4">
+            Use the filters above to search for products in the supply chain.
+        </p>
+    </div>
+{% endif %}
+{% endblock %}
