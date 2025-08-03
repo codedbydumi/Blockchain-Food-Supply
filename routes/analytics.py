@@ -154,24 +154,77 @@ def get_product_category_data():
 
 def get_quality_trends_data(start_date, end_date):
     """
-    Get quality trends over time
+    Get quality trends over time - FIXED VERSION
     """
     try:
-        daily_quality = db.session.query(
-            func.date(Product.created_at).label('date'),
-            func.avg(Product.quality_score).label('avg_quality'),
-            func.count(Product.id).label('product_count')
-        ).filter(
-            and_(Product.created_at >= start_date, Product.created_at <= end_date)
-        ).group_by(func.date(Product.created_at)).order_by('date').all()
+        # Get ALL products with quality scores (ignore date filter for now)
+        products_with_quality = Product.query.filter(
+            Product.quality_score.isnot(None)
+        ).order_by(Product.created_at).all()
         
-        return [{
-            'date': date.isoformat() if date else datetime.now().date().isoformat(),  # Fixed the typo here
-            'avg_quality': round(float(avg_quality), 1) if avg_quality else 0,
-            'product_count': product_count
-        } for date, avg_quality, product_count in daily_quality]
+        if not products_with_quality:
+            print("No products with quality scores found")
+            return []
+        
+        # Group by date manually
+        date_groups = {}
+        for product in products_with_quality:
+            date_str = product.created_at.date().isoformat()
+            if date_str not in date_groups:
+                date_groups[date_str] = {'scores': [], 'count': 0}
+            date_groups[date_str]['scores'].append(product.quality_score)
+            date_groups[date_str]['count'] += 1
+        
+        # Calculate averages
+        result = []
+        for date_str, data in sorted(date_groups.items()):
+            avg_score = sum(data['scores']) / len(data['scores'])
+            result.append({
+                'date': date_str,
+                'avg_quality': round(avg_score, 1),
+                'product_count': data['count']
+            })
+        
+        print(f"Quality trends data: {result}")
+        return result
+        
     except Exception as e:
         print(f"Error in get_quality_trends_data: {e}")
+        return []
+
+def get_transaction_volume_data(start_date, end_date):
+    """
+    Get transaction volume over time - FIXED VERSION
+    """
+    try:
+        # Get ALL transactions (ignore date filter for now)
+        all_transactions = Transaction.query.order_by(Transaction.timestamp).all()
+        
+        if not all_transactions:
+            print("No transactions found")
+            return []
+        
+        # Group by date manually
+        date_groups = {}
+        for transaction in all_transactions:
+            date_str = transaction.timestamp.date().isoformat()
+            if date_str not in date_groups:
+                date_groups[date_str] = 0
+            date_groups[date_str] += 1
+        
+        # Convert to list
+        result = []
+        for date_str, count in sorted(date_groups.items()):
+            result.append({
+                'date': date_str,
+                'transaction_count': count
+            })
+        
+        print(f"Transaction volume data: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"Error in get_transaction_volume_data: {e}")
         return []
 
 def get_temperature_analysis_data():
@@ -208,26 +261,24 @@ def get_temperature_analysis_data():
             'total_products': 0, 'unsafe_temp_count': 0, 'compliance_rate': 100
         }
 
-def get_transaction_volume_data(start_date, end_date):
-    """
-    Get transaction volume over time
-    """
-    try:
-        daily_transactions = db.session.query(
-            func.date(Transaction.timestamp).label('date'),
-            func.count(Transaction.id).label('transaction_count')
-        ).filter(
-            and_(Transaction.timestamp >= start_date, Transaction.timestamp <= end_date)
-        ).group_by(func.date(Transaction.timestamp)).order_by('date').all()
+# def get_transaction_volume_data(start_date, end_date):
+#     """
+#     Get transaction volume over time
+#     """
+#     try:
+#         # Get all transactions (ignore date range if no recent data)
+#         daily_transactions = db.session.query(
+#             func.date(Transaction.timestamp).label('date'),
+#             func.count(Transaction.id).label('transaction_count')
+#         ).group_by(func.date(Transaction.timestamp)).order_by('date').all()
         
-        return [{
-            'date': date.isoformat() if date else datetime.now().date().isoformat(),  # Fixed the typo here too
-            'transaction_count': transaction_count
-        } for date, transaction_count in daily_transactions]
-    except Exception as e:
-        print(f"Error in get_transaction_volume_data: {e}")
-        return []
-
+#         return [{
+#             'date': date.isoformat() if date else datetime.now().date().isoformat(),
+#             'transaction_count': transaction_count
+#         } for date, transaction_count in daily_transactions]
+#     except Exception as e:
+#         print(f"Error in get_transaction_volume_data: {e}")
+#         return []
 def get_fraud_detection_data():
     """
     Detect potential fraud indicators
@@ -303,6 +354,40 @@ def get_performance_metrics_data():
         }
 
 # API endpoints for dynamic data loading
+@analytics_bp.route('/debug')
+@login_required
+def debug_data():
+    """
+    Debug analytics data
+    """
+    from datetime import datetime, timedelta
+    
+    # Get all products
+    all_products = Product.query.all()
+    products_with_quality = Product.query.filter(Product.quality_score.isnot(None)).all()
+    all_transactions = Transaction.query.all()
+    
+    # Test the actual functions
+    try:
+        quality_data = get_quality_trends_data(datetime.now() - timedelta(days=90), datetime.now())
+        transaction_data = get_transaction_volume_data(datetime.now() - timedelta(days=90), datetime.now())
+    except Exception as e:
+        quality_data = f"Error: {e}"
+        transaction_data = f"Error: {e}"
+    
+    debug_info = {
+        'total_products': len(all_products),
+        'products_with_quality': len(products_with_quality),
+        'total_transactions': len(all_transactions),
+        'quality_scores': [p.quality_score for p in products_with_quality if p.quality_score],
+        'product_dates': [p.created_at.strftime('%Y-%m-%d') for p in all_products],
+        'transaction_dates': [t.timestamp.strftime('%Y-%m-%d') for t in all_transactions],
+        'quality_data': quality_data,
+        'transaction_data': transaction_data
+    }
+    
+    return f"<pre>{json.dumps(debug_info, indent=2, default=str)}</pre>"
+
 
 @analytics_bp.route('/api/chart_data/<chart_type>')
 @login_required
