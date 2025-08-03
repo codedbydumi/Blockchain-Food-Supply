@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="error-page">
+                <div class="error-code mb-4">
+                    <h1 class="display-1 fw-bold text-danger">500</h1>
+                </div>
+                
+                <div class="error-icon mb-4">
+                    <i class="fas fa-exclamation-triangle fa-5x text-danger"></i>
+                </div>
+                
+                <h2 class="mb-3">Internal Server Error</h2>
+                <p class="lead text-muted mb-4">
+                    Something went wrong on our servers. We're working to fix it.
+                </p>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>What happened?</strong> Our system encountered an unexpected error while processing your request.
+                </div>
+                
+                <div class="error-actions mb-5">
+                    <a href="{{ url_for('index') }}" class="btn btn-success btn-lg me-3">
+                        <i class="fas fa-home me-2"></i>Go Home
+                    </a>
+                    <button onclick="location.reload()" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-redo me-2"></i>Try Again
+                    </button>
+                </div>
+                
+                <div class="troubleshooting">
+                    <h5 class="mb-3">Troubleshooting Steps:</h5>
+                    <div class="row text-start">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-redo text-primary me-2"></i>Refresh the Page
+                                    </h6>
+                                    <p class="card-text small text-muted">
+                                        Sometimes a simple refresh can resolve temporary issues.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-clock text-warning me-2"></i>Wait a Moment
+                                    </h6>
+                                    <p class="card-text small text-muted">
+                                        Our team may be performing maintenance. Try again in a few minutes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-trash text-info me-2"></i>Clear Cache
+                                    </h6>
+                                    <p class="card-text small text-muted">
+                                        Clear your browser's cache and cookies, then try again.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-envelope text-success me-2"></i>Contact Support
+                                    </h6>
+                                    <p class="card-text small text-muted">
+                                        If the problem persists, please contact our support team.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
