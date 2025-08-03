@@ -418,14 +418,17 @@ def add_product_transaction(product_id, from_user_id, to_user_id, transaction_ty
     """
     Create and add a new product transaction to blockchain
     """
+    # Get quantity from kwargs, with default value
+    quantity = kwargs.pop('quantity', 1.0)  # Remove quantity from kwargs to avoid duplicate
+    
     # Create database transaction
     transaction = Transaction(
         product_id=product_id,
         from_user_id=from_user_id,
         to_user_id=to_user_id,
         transaction_type=transaction_type,
-        quantity=kwargs.get('quantity', 1),
-        **kwargs
+        quantity=quantity,
+        **kwargs  # Now kwargs won't have 'quantity' in it
     )
     
     # Save to database

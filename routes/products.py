@@ -54,46 +54,20 @@ def add_product():
         return redirect(url_for('products.list_products'))
     
     if request.method == 'POST':
-        # Get form data with safe conversions
-        name = request.form.get('name')
-        category = request.form.get('category')
-        description = request.form.get('description')
-        
-        # Safe float conversion for quantity
-        try:
-            quantity_str = request.form.get('quantity', '0')
-            quantity = float(quantity_str) if quantity_str.strip() else 0.0
-        except (ValueError, TypeError):
-            quantity = 0.0
-            
-        unit = request.form.get('unit')
-        quality_grade = request.form.get('quality_grade')
-        
-        # Safe int conversion for quality score
-        try:
-            quality_score_str = request.form.get('quality_score', '0')
-            quality_score = int(quality_score_str) if quality_score_str.strip() else 0
-        except (ValueError, TypeError):
-            quality_score = 0
-            
-        origin_location = request.form.get('origin_location')
-        current_location = request.form.get('current_location')
-        harvest_date = request.form.get('harvest_date')
-        expiry_date = request.form.get('expiry_date')
-        
-        # Safe float conversion for temperature
-        try:
-            temperature_str = request.form.get('temperature', '')
-            temperature = float(temperature_str) if temperature_str.strip() else None
-        except (ValueError, TypeError):
-            temperature = None
-            
-        # Safe float conversion for humidity
-        try:
-            humidity_str = request.form.get('humidity', '')
-            humidity = float(humidity_str) if humidity_str.strip() else None
-        except (ValueError, TypeError):
-            humidity = None
+        # Get form data
+        name = request.form.get('name', '').strip()
+        category = request.form.get('category', '').strip()
+        description = request.form.get('description', '').strip()
+        quantity = request.form.get('quantity', '0')
+        unit = request.form.get('unit', '').strip()
+        quality_grade = request.form.get('quality_grade', '').strip()
+        quality_score = request.form.get('quality_score', '0')
+        origin_location = request.form.get('origin_location', '').strip()
+        current_location = request.form.get('current_location', '').strip()
+        harvest_date = request.form.get('harvest_date', '')
+        expiry_date = request.form.get('expiry_date', '')
+        temperature = request.form.get('temperature', '0')
+        humidity = request.form.get('humidity', '0')
         
         # Validate input
         errors = []
@@ -101,28 +75,50 @@ def add_product():
             errors.append('Product name must be at least 2 characters long.')
         if not category:
             errors.append('Please select a category.')
-        if quantity <= 0:
-            errors.append('Quantity must be greater than 0.')
+        
+        try:
+            quantity = float(quantity)
+            if quantity <= 0:
+                errors.append('Quantity must be greater than 0.')
+        except ValueError:
+            errors.append('Invalid quantity value.')
+            quantity = 0
+        
         if not unit:
             errors.append('Please specify the unit.')
-        if quality_score < 0 or quality_score > 100:
-            errors.append('Quality score must be between 0 and 100.')
         
-        # Parse dates safely
+        try:
+            quality_score = int(quality_score)
+            if quality_score < 0 or quality_score > 100:
+                errors.append('Quality score must be between 0 and 100.')
+        except ValueError:
+            quality_score = 0
+        
+        try:
+            temperature = float(temperature) if temperature else None
+        except ValueError:
+            temperature = None
+        
+        try:
+            humidity = float(humidity) if humidity else None
+        except ValueError:
+            humidity = None
+        
+        # Parse dates
         harvest_date_obj = None
         expiry_date_obj = None
         
-        try:
-            if harvest_date and harvest_date.strip():
+        if harvest_date:
+            try:
                 harvest_date_obj = datetime.strptime(harvest_date, '%Y-%m-%d').date()
-        except ValueError:
-            errors.append('Invalid harvest date format.')
-            
-        try:
-            if expiry_date and expiry_date.strip():
+            except ValueError:
+                errors.append('Invalid harvest date format.')
+        
+        if expiry_date:
+            try:
                 expiry_date_obj = datetime.strptime(expiry_date, '%Y-%m-%d').date()
-        except ValueError:
-            errors.append('Invalid expiry date format.')
+            except ValueError:
+                errors.append('Invalid expiry date format.')
         
         if errors:
             for error in errors:
@@ -137,10 +133,10 @@ def add_product():
                 description=description,
                 quantity=quantity,
                 unit=unit,
-                quality_grade=quality_grade,
-                quality_score=quality_score,
-                origin_location=origin_location,
-                current_location=current_location,
+                quality_grade=quality_grade if quality_grade else None,
+                quality_score=quality_score if quality_score > 0 else None,
+                origin_location=origin_location if origin_location else None,
+                current_location=current_location if current_location else None,
                 harvest_date=harvest_date_obj,
                 expiry_date=expiry_date_obj,
                 temperature=temperature,
@@ -149,7 +145,7 @@ def add_product():
             )
             
             db.session.add(product)
-            db.session.commit()
+            db.session.flush()  # Get the product ID before committing
             
             # Create blockchain transaction for product creation
             transaction = add_product_transaction(
@@ -158,11 +154,14 @@ def add_product():
                 to_user_id=current_user.id,  # Initially owned by creator
                 transaction_type='create',
                 quantity=quantity,
-                location=current_location,
+                location=current_location if current_location else None,
                 temperature=temperature,
                 humidity=humidity,
                 notes=f'Product created: {name}'
             )
+            
+            # Commit all changes
+            db.session.commit()
             
             # Mine new block
             mine_new_block()
@@ -172,11 +171,12 @@ def add_product():
             
         except Exception as e:
             db.session.rollback()
-            flash('Failed to create product. Please try again.', 'danger')
+            flash(f'Failed to create product: {str(e)}', 'danger')
             print(f"Product creation error: {e}")
+            return render_template('products/add.html')
     
+    # GET request - show the form
     return render_template('products/add.html')
-
 @products_bp.route('/<int:id>')
 @login_required
 def view_product(id):

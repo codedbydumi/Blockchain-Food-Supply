@@ -14,13 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     setupEventListeners();
     initializeTooltips();
-    setupFormValidation();
+    setupFormSubmissions();  // ← Changed from setupFormValidation
     startAutoRefresh();
     setupNotifications();
     initializeCharts();
     setupSearchFunctionality();
 }
-
 // Event Listeners
 function setupEventListeners() {
     // Navigation active states
