@@ -1,23 +1,14 @@
-# Basic Flask Requirements
 Flask==2.3.3
 Flask-Login==0.6.3
 Flask-WTF==1.1.1
-Werkzeug==2.3.7
-
-# Database
 SQLAlchemy==2.0.21
-
-# Cryptography (for blockchain)
 pycryptodome==3.19.0
-
-# Data Analysis (install separately)
-# pandas  # We'll install this differently
-# numpy   # We'll install this differently
-
-# Visualization
+pandas==2.1.1
+numpy==1.24.3
 matplotlib==3.7.2
+seaborn==0.12.2
 plotly==5.17.0
 streamlit==1.28.0
-
-# Utilities
+Werkzeug==2.3.7
 python-dotenv==1.0.0
+bcrypt==4.0.1
