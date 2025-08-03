@@ -116,153 +116,191 @@ def get_supply_chain_flow_data():
     """
     Get supply chain flow statistics
     """
-    flow_stats = db.session.query(
-        Transaction.transaction_type,
-        func.count(Transaction.id).label('count')
-    ).group_by(Transaction.transaction_type).all()
-    
-    return {
-        'flow_stats': dict(flow_stats),
-        'total_transactions': sum(count for _, count in flow_stats)
-    }
+    try:
+        flow_stats = db.session.query(
+            Transaction.transaction_type,
+            func.count(Transaction.id).label('count')
+        ).group_by(Transaction.transaction_type).all()
+        
+        return {
+            'flow_stats': dict(flow_stats) if flow_stats else {},
+            'total_transactions': sum(count for _, count in flow_stats) if flow_stats else 0
+        }
+    except Exception as e:
+        print(f"Error in get_supply_chain_flow_data: {e}")
+        return {'flow_stats': {}, 'total_transactions': 0}
 
 def get_product_category_data():
     """
     Get product distribution by category
     """
-    category_stats = db.session.query(
-        Product.category,
-        func.count(Product.id).label('count'),
-        func.avg(Product.quality_score).label('avg_quality'),
-        func.sum(Product.quantity).label('total_quantity')
-    ).group_by(Product.category).all()
-    
-    return [{
-        'category': category,
-        'count': count,
-        'avg_quality': round(avg_quality, 1) if avg_quality else 0,
-        'total_quantity': total_quantity or 0
-    } for category, count, avg_quality, total_quantity in category_stats]
+    try:
+        category_stats = db.session.query(
+            Product.category,
+            func.count(Product.id).label('count'),
+            func.avg(Product.quality_score).label('avg_quality'),
+            func.sum(Product.quantity).label('total_quantity')
+        ).group_by(Product.category).all()
+        
+        return [{
+            'category': category,
+            'count': count,
+            'avg_quality': round(float(avg_quality), 1) if avg_quality else 0,
+            'total_quantity': float(total_quantity) if total_quantity else 0
+        } for category, count, avg_quality, total_quantity in category_stats]
+    except Exception as e:
+        print(f"Error in get_product_category_data: {e}")
+        return []
 
 def get_quality_trends_data(start_date, end_date):
     """
     Get quality trends over time
     """
-    daily_quality = db.session.query(
-        func.date(Product.created_at).label('date'),
-        func.avg(Product.quality_score).label('avg_quality'),
-        func.count(Product.id).label('product_count')
-    ).filter(
-        and_(Product.created_at >= start_date, Product.created_at <= end_date)
-    ).group_by(func.date(Product.created_at)).order_by('date').all()
-    
-    return [{
-        'date': str(date),  # ✅ Fixed: Convert to string directly
-        'avg_quality': round(avg_quality, 1) if avg_quality else 0,
-        'product_count': product_count
-    } for date, avg_quality, product_count in daily_quality]
+    try:
+        daily_quality = db.session.query(
+            func.date(Product.created_at).label('date'),
+            func.avg(Product.quality_score).label('avg_quality'),
+            func.count(Product.id).label('product_count')
+        ).filter(
+            and_(Product.created_at >= start_date, Product.created_at <= end_date)
+        ).group_by(func.date(Product.created_at)).order_by('date').all()
+        
+        return [{
+            'date': date.isoformat() if date else datetime.now().date().isoformat(),  # Fixed the typo here
+            'avg_quality': round(float(avg_quality), 1) if avg_quality else 0,
+            'product_count': product_count
+        } for date, avg_quality, product_count in daily_quality]
+    except Exception as e:
+        print(f"Error in get_quality_trends_data: {e}")
+        return []
+
 def get_temperature_analysis_data():
     """
     Analyze temperature data for cold chain compliance
     """
-    temp_stats = db.session.query(
-        func.avg(Product.temperature).label('avg_temp'),
-        func.min(Product.temperature).label('min_temp'),
-        func.max(Product.temperature).label('max_temp'),
-        func.count(Product.id).label('total_products')
-    ).filter(Product.temperature.isnot(None)).first()
-    
-    # Count products outside safe temperature range (0-25°C)
-    unsafe_temp_count = Product.query.filter(
-        (Product.temperature < 0) | (Product.temperature > 25)
-    ).count()
-    
-    return {
-        'avg_temperature': round(temp_stats.avg_temp, 1) if temp_stats.avg_temp else 0,
-        'min_temperature': temp_stats.min_temp or 0,
-        'max_temperature': temp_stats.max_temp or 0,
-        'total_products': temp_stats.total_products or 0,
-        'unsafe_temp_count': unsafe_temp_count,
-        'compliance_rate': round((1 - unsafe_temp_count / max(temp_stats.total_products, 1)) * 100, 1)
-    }
+    try:
+        temp_stats = db.session.query(
+            func.avg(Product.temperature).label('avg_temp'),
+            func.min(Product.temperature).label('min_temp'),
+            func.max(Product.temperature).label('max_temp'),
+            func.count(Product.id).label('total_products')
+        ).filter(Product.temperature.isnot(None)).first()
+        
+        # Count products outside safe temperature range (0-25°C)
+        unsafe_temp_count = Product.query.filter(
+            (Product.temperature < 0) | (Product.temperature > 25)
+        ).count() if temp_stats and temp_stats.total_products else 0
+        
+        total_products = temp_stats.total_products if temp_stats else 0
+        
+        return {
+            'avg_temperature': round(float(temp_stats.avg_temp), 1) if temp_stats and temp_stats.avg_temp else 0,
+            'min_temperature': float(temp_stats.min_temp) if temp_stats and temp_stats.min_temp else 0,
+            'max_temperature': float(temp_stats.max_temp) if temp_stats and temp_stats.max_temp else 0,
+            'total_products': total_products,
+            'unsafe_temp_count': unsafe_temp_count,
+            'compliance_rate': round((1 - unsafe_temp_count / max(total_products, 1)) * 100, 1)
+        }
+    except Exception as e:
+        print(f"Error in get_temperature_analysis_data: {e}")
+        return {
+            'avg_temperature': 0, 'min_temperature': 0, 'max_temperature': 0,
+            'total_products': 0, 'unsafe_temp_count': 0, 'compliance_rate': 100
+        }
 
 def get_transaction_volume_data(start_date, end_date):
     """
     Get transaction volume over time
     """
-    daily_transactions = db.session.query(
-        func.date(Transaction.timestamp).label('date'),
-        func.count(Transaction.id).label('transaction_count')
-    ).filter(
-        and_(Transaction.timestamp >= start_date, Transaction.timestamp <= end_date)
-    ).group_by(func.date(Transaction.timestamp)).order_by('date').all()
-    
-    return [{
-        'date': date.isoformat(),
-        'transaction_count': transaction_count
-    } for date, transaction_count in daily_transactions]
+    try:
+        daily_transactions = db.session.query(
+            func.date(Transaction.timestamp).label('date'),
+            func.count(Transaction.id).label('transaction_count')
+        ).filter(
+            and_(Transaction.timestamp >= start_date, Transaction.timestamp <= end_date)
+        ).group_by(func.date(Transaction.timestamp)).order_by('date').all()
+        
+        return [{
+            'date': date.isoformat() if date else datetime.now().date().isoformat(),  # Fixed the typo here too
+            'transaction_count': transaction_count
+        } for date, transaction_count in daily_transactions]
+    except Exception as e:
+        print(f"Error in get_transaction_volume_data: {e}")
+        return []
 
 def get_fraud_detection_data():
     """
     Detect potential fraud indicators
     """
-    alerts = []
-    
-    # Check for rapid ownership changes
-    rapid_transfers = db.session.query(
-        Transaction.product_id,
-        func.count(Transaction.id).label('transfer_count')
-    ).filter(
-        Transaction.timestamp >= datetime.now() - timedelta(days=1)
-    ).group_by(Transaction.product_id).having(
-        func.count(Transaction.id) > 3
-    ).all()
-    
-    for product_id, count in rapid_transfers:
-        product = Product.query.get(product_id)
-        alerts.append({
-            'type': 'rapid_transfers',
-            'severity': 'high',
-            'message': f'Product {product.batch_id} has {count} transfers in 24 hours',
-            'product_id': product_id
-        })
-    
-    # Check for temperature violations
-    temp_violations = Product.query.filter(
-        (Product.temperature < -10) | (Product.temperature > 40)
-    ).all()
-    
-    for product in temp_violations:
-        alerts.append({
-            'type': 'temperature_violation',
-            'severity': 'medium',
-            'message': f'Product {product.batch_id} temperature out of range: {product.temperature}°C',
-            'product_id': product.id
-        })
-    
-    return alerts
+    try:
+        alerts = []
+        
+        # Check for rapid ownership changes
+        rapid_transfers = db.session.query(
+            Transaction.product_id,
+            func.count(Transaction.id).label('transfer_count')
+        ).filter(
+            Transaction.timestamp >= datetime.now() - timedelta(days=1)
+        ).group_by(Transaction.product_id).having(
+            func.count(Transaction.id) > 3
+        ).all()
+        
+        for product_id, count in rapid_transfers:
+            product = Product.query.get(product_id)
+            if product:
+                alerts.append({
+                    'type': 'rapid_transfers',
+                    'severity': 'high',
+                    'message': f'Product {product.batch_id} has {count} transfers in 24 hours',
+                    'product_id': product_id
+                })
+        
+        # Check for temperature violations
+        temp_violations = Product.query.filter(
+            (Product.temperature < -10) | (Product.temperature > 40)
+        ).limit(10).all()  # Limit to prevent too many alerts
+        
+        for product in temp_violations:
+            alerts.append({
+                'type': 'temperature_violation',
+                'severity': 'medium',
+                'message': f'Product {product.batch_id} temperature out of range: {product.temperature}°C',
+                'product_id': product.id
+            })
+        
+        return alerts
+    except Exception as e:
+        print(f"Error in get_fraud_detection_data: {e}")
+        return []
 
 def get_performance_metrics_data():
     """
     Calculate key performance indicators
     """
-    # Average delivery time (rough estimate based on transactions)
-    avg_delivery_time = db.session.query(
-        func.avg(func.julianday(Transaction.timestamp) - func.julianday(Product.created_at)).label('avg_days')
-    ).join(Product).filter(Transaction.transaction_type == 'transfer').first()
-    
-    # Product turnover rate
-    total_products = Product.query.count()
-    transferred_products = db.session.query(Transaction.product_id.distinct()).filter(
-        Transaction.transaction_type == 'transfer'
-    ).count()
-    
-    return {
-        'avg_delivery_time': round(avg_delivery_time.avg_days, 1) if avg_delivery_time.avg_days else 0,
-        'product_turnover_rate': round((transferred_products / max(total_products, 1)) * 100, 1),
-        'total_stakeholders': User.query.count(),
-        'active_products': Product.query.filter(Product.status != 'expired').count()
-    }
+    try:
+        # Average delivery time (rough estimate based on transactions)
+        avg_delivery_time = db.session.query(
+            func.avg(func.julianday(Transaction.timestamp) - func.julianday(Product.created_at)).label('avg_days')
+        ).join(Product).filter(Transaction.transaction_type == 'transfer').first()
+        
+        # Product turnover rate
+        total_products = Product.query.count()
+        transferred_products = db.session.query(Transaction.product_id.distinct()).filter(
+            Transaction.transaction_type == 'transfer'
+        ).count()
+        
+        return {
+            'avg_delivery_time': round(float(avg_delivery_time.avg_days), 1) if avg_delivery_time and avg_delivery_time.avg_days else 0,
+            'product_turnover_rate': round((transferred_products / max(total_products, 1)) * 100, 1),
+            'total_stakeholders': User.query.count(),
+            'active_products': Product.query.filter(Product.status != 'expired').count()
+        }
+    except Exception as e:
+        print(f"Error in get_performance_metrics_data: {e}")
+        return {
+            'avg_delivery_time': 0, 'product_turnover_rate': 0,
+            'total_stakeholders': 0, 'active_products': 0
+        }
 
 # API endpoints for dynamic data loading
 
