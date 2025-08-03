@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - FoodChain Tracker{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-chart-line me-3"></i>Analytics Dashboard
+        </h1>
+        <p class="lead text-muted">Real-time insights into supply chain performance and food safety</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="timeRange" id="days7" value="7">
+            <label class="btn btn-outline-primary" for="days7">7 Days</label>
+            
+            <input type="radio" class="btn-check" name="timeRange" id="days30" value="30" checked>
+            <label class="btn btn-outline-primary" for="days30">30 Days</label>
+            
+            <input type="radio" class="btn-check" name="timeRange" id="days90" value="90">
+            <label class="btn btn-outline-primary" for="days90">90 Days</label>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ analytics_data.supply_chain_flow.total_transactions or 0 }}</h4>
+                        <p class="card-text">Total Transactions</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exchange-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ analytics_data.temperature_analysis.compliance_rate or 0 }}%</h4>
+                        <p class="card-text">Temperature Compliance</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-thermometer-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ analytics_data.fraud_alerts|length or 0 }}</h4>
+                        <p class="card-text">Active Alerts</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ blockchain_info.total_blocks or 0 }}</h4>
+                        <p class="card-text">Blockchain Blocks</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cubes fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Product Categories Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Product Categories
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="categoriesChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quality Trends Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Quality Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="qualityChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Temperature Analysis -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-thermometer-half me-2"></i>Temperature Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-info">{{ "%.1f"|format(analytics_data.temperature_analysis.avg_temperature or 0) }}°C</h4>
+                        <small class="text-muted">Average Temperature</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-success">{{ analytics_data.temperature_analysis.min_temperature or 0 }}°C</h4>
+                        <small class="text-muted">Minimum</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-danger">{{ analytics_data.temperature_analysis.max_temperature or 0 }}°C</h4>
+                        <small class="text-muted">Maximum</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-warning">{{ analytics_data.temperature_analysis.unsafe_temp_count or 0 }}</h4>
+                        <small class="text-muted">Violations</small>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ analytics_data.temperature_analysis.compliance_rate or 0 }}%">
+                        {{ analytics_data.temperature_analysis.compliance_rate or 0 }}% Compliant
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fraud Alerts -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Security Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if analytics_data.fraud_alerts %}
+                    <div class="alert-list" style="max-height: 250px; overflow-y: auto;">
+                        {% for alert in analytics_data.fraud_alerts %}
+                            <div class="alert alert-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }} alert-sm mb-2">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if alert.severity == 'high' else 'exclamation-circle' if alert.severity == 'medium' else 'info-circle' }} me-2 mt-1"></i>
+                                    <div>
+                                        <strong>{{ alert.type.replace('_', ' ').title() }}</strong><br>
+                                        <small>{{ alert.message }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-shield-check fa-3x mb-3 text-success"></i>
+                        <p class="mb-0">No security alerts</p>
+                        <small>All systems operating normally</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Volume Chart -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Transaction Volume Over Time
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="transactionChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>Performance Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-primary">{{ "%.1f"|format(analytics_data.performance_metrics.avg_delivery_time or 0) }}</h3>
+                        <p class="text-muted mb-0">Average Delivery Time (days)</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-success">{{ "%.1f"|format(analytics_data.performance_metrics.product_turnover_rate or 0) }}%</h3>
+                        <p class="text-muted mb-0">Product Turnover Rate</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-info">{{ analytics_data.performance_metrics.total_stakeholders or 0 }}</h3>
+                        <p class="text-muted mb-0">Active Stakeholders</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-warning">{{ analytics_data.performance_metrics.active_products or 0 }}</h3>
+                        <p class="text-muted mb-0">Active Products</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Analytics Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAnalyticsCharts();
+    setupTimeRangeSelection();
+    setupAutoRefresh();
+});
+
+function initializeAnalyticsCharts() {
+    // Product Categories Pie Chart
+    const categoriesData = {{ analytics_data.product_categories | tojson | safe }};
+    createCategoriesChart(categoriesData);
+    
+    // Quality Trends Line Chart
+    const qualityData = {{ analytics_data.quality_trends | tojson | safe }};
+    createQualityChart(qualityData);
+    
+    // Transaction Volume Chart
+    const transactionData = {{ analytics_data.transaction_volume | tojson | safe }};
+    createTransactionChart(transactionData);
+}
+
+function createCategoriesChart(data) {
+    const categories = data.map(item => item.category);
+    const counts = data.map(item => item.count);
+    
+    const chartData = [{
+        values: counts,
+        labels: categories,
+        type: 'pie',
+        marker: {
+            colors: ['#28a745', '#fd7e14', '#dc3545', '#0dcaf0', '#6f42c1', '#20c997']
+        }
+    }];
+    
+    const layout = {
+        showlegend: true,
+        margin: { t: 30, b: 30, l: 30, r: 30 }
+    };
+    
+    Plotly.newPlot('categoriesChart', chartData, layout, {responsive: true});
+}
+
+function createQualityChart(data) {
+    const dates = data.map(item => item.date);
+    const qualities = data.map(item => item.avg_quality);
+    
+    const chartData = [{
+        x: dates,
+        y: qualities,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#28a745', width: 3 },
+        marker: { color: '#28a745', size: 6 }
+    }];
+    
+    const layout = {
+        xaxis: { title: 'Date' },
+        yaxis: { title: 'Average Quality Score', range: [0, 100] },
+        margin: { t: 30, b: 50, l: 50, r: 30 }
+    };
+    
+    Plotly.newPlot('qualityChart', chartData, layout, {responsive: true});
+}
+
+function createTransactionChart(data) {
+    const dates = data.map(item => item.date);
+    const counts = data.map(item => item.transaction_count);
+    
+    const chartData = [{
+        x: dates,
+        y: counts,
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'tonexty',
+        line: { color: '#fd7e14' },
+        fillcolor: 'rgba(253, 126, 20, 0.3)'
+    }];
+    
+    const layout = {
+        xaxis: { title: 'Date' },
+        yaxis: { title: 'Number of Transactions' },
+        margin: { t: 30, b: 50, l: 50, r: 30 }
+    };
+    
+    Plotly.newPlot('transactionChart', chartData, layout, {responsive: true});
+}
+
+function setupTimeRangeSelection() {
+    const timeRangeInputs = document.querySelectorAll('input[name="timeRange"]');
+    
+    timeRangeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                updateChartsForTimeRange(this.value);
+            }
+        });
+    });
+}
+
+function updateChartsForTimeRange(days) {
+    // Fetch new data for the selected time range
+    fetch(`/analytics/api/chart_data/quality_trends?days=${days}`)
+        .then(response => response.json())
+        .then(data => createQualityChart(data))
+        .catch(error => console.error('Error updating quality chart:', error));
+    
+    fetch(`/analytics/api/chart_data/transaction_volume?days=${days}`)
+        .then(response => response.json())
+        .then(data => createTransactionChart(data))
+        .catch(error => console.error('Error updating transaction chart:', error));
+}
+
+function setupAutoRefresh() {
+    // Refresh fraud alerts every 30 seconds
+    setInterval(function() {
+        fetch('/analytics/api/fraud_alerts')
+            .then(response => response.json())
+            .then(alerts => updateFraudAlerts(alerts))
+            .catch(error => console.error('Error refreshing fraud alerts:', error));
+    }, 30000);
+}
+
+function updateFraudAlerts(alerts) {
+    const alertContainer = document.querySelector('.alert-list');
+    if (!alertContainer) return;
+    
+    if (alerts.length === 0) {
+        alertContainer.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-shield-check fa-3x mb-3 text-success"></i>
+                <p class="mb-0">No security alerts</p>
+                <small>All systems operating normally</small>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    alerts.forEach(alert => {
+        const severityClass = alert.severity === 'high' ? 'danger' : 
+                            alert.severity === 'medium' ? 'warning' : 'info';
+        const iconClass = alert.severity === 'high' ? 'exclamation-triangle' : 
+                         alert.severity === 'medium' ? 'exclamation-circle' : 'info-circle';
+        
+        html += `
+            <div class="alert alert-${severityClass} alert-sm mb-2">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-${iconClass} me-2 mt-1"></i>
+                    <div>
+                        <strong>${alert.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong><br>
+                        <small>${alert.message}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    alertContainer.innerHTML = html;
+}
+</script>
+{% endblock %}
