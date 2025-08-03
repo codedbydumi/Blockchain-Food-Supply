@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-tachometer-alt me-3"></i>
+            Welcome back, {{ current_user.full_name }}!
+        </h1>
+        <p class="lead text-muted">
+            {{ current_user.get_role_display() }} Dashboard
+            <span class="badge bg-success ms-2">{{ current_user.company_name or 'Individual' }}</span>
+        </p>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mb-4">
+    {% if current_user.role == 'farmer' %}
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.products_created or 0 }}</h4>
+                            <p class="card-text">Products Created</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-seedling fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.active_products or 0 }}</h4>
+                            <p class="card-text">Active Products</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-box fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ "%.1f"|format(user_stats.total_quantity or 0) }}</h4>
+                            <p class="card-text">Total Quantity (kg)</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-weight fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.transactions_sent or 0 }}</h4>
+                            <p class="card-text">Transfers Made</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    {% elif current_user.role in ['distributor', 'retailer'] %}
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.products_owned or 0 }}</h4>
+                            <p class="card-text">Products Owned</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.transactions_received or 0 }}</h4>
+                            <p class="card-text">Received</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-download fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.transactions_sent or 0 }}</h4>
+                            <p class="card-text">Transferred</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-upload fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.products_in_transit or 0 }}</h4>
+                            <p class="card-text">In Transit</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-truck fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    {% elif current_user.role == 'inspector' %}
+        <div class="col-md-3 mb-3">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.total_products or 0 }}</h4>
+                            <p class="card-text">Total Products</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clipboard-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.total_transactions or 0 }}</h4>
+                            <p class="card-text">Total Transactions</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.quality_issues or 0 }}</h4>
+                            <p class="card-text">Quality Issues</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ user_stats.products_inspected or 0 }}</h4>
+                            <p class="card-text">Inspected</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-search fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Recent Activities -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                    <div class="timeline">
+                        {% for activity in recent_activities %}
+                            <div class="timeline-item d-flex mb-3">
+                                <div class="timeline-marker">
+                                    {% if activity.type == 'created' %}
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    {% elif activity.type == 'sent' %}
+                                        <i class="fas fa-arrow-up text-warning"></i>
+                                    {% elif activity.type == 'received' %}
+                                        <i class="fas fa-arrow-down text-info"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content ms-3">
+                                    <h6 class="mb-1">{{ activity.description }}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ activity.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-history fa-3x mb-3"></i>
+                        <p>No recent activities found.</p>
+                        {% if current_user.can_create_products() %}
+                            <a href="{{ url_for('products.add_product') }}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Create Your First Product
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions & System Info -->
+    <div class="col-lg-4 mb-4">
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_user.can_create_products() %}
+                    <a href="{{ url_for('products.add_product') }}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-plus me-2"></i>Add New Product
+                    </a>
+                {% endif %}
+                
+                <a href="{{ url_for('products.list_products') }}" class="btn btn-primary w-100 mb-2">
+                    <i class="fas fa-list me-2"></i>View Products
+                </a>
+                
+                <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-info w-100 mb-2">
+                    <i class="fas fa-chart-line me-2"></i>View Analytics
+                </a>
+                
+                <a href="{{ url_for('products.search_products') }}" class="btn btn-warning w-100">
+                    <i class="fas fa-search me-2"></i>Search Products
+                </a>
+            </div>
+        </div>
+        
+        <!-- Blockchain Info -->
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>Blockchain Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ blockchain_info.total_blocks }}</h4>
+                        <small class="text-muted">Total Blocks</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success">{{ blockchain_info.total_transactions }}</h4>
+                        <small class="text-muted">Transactions</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ blockchain_info.pending_transactions }}</h4>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                    <div class="col-6">
+                        <span class="badge bg-{{ 'success' if blockchain_info.is_valid else 'danger' }}">
+                            {{ 'Valid' if blockchain_info.is_valid else 'Invalid' }}
+                        </span>
+                        <br><small class="text-muted">Chain Status</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Overview (for all users) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>System Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-success">{{ system_overview.category_stats|length or 0 }}</h3>
+                        <p class="text-muted mb-0">Product Categories</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-info">{{ system_overview.quality_stats.high_quality or 0 }}</h3>
+                        <p class="text-muted mb-0">High Quality Products</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-warning">{{ system_overview.temperature_alerts or 0 }}</h3>
+                        <p class="text-muted mb-0">Temperature Alerts</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <span class="badge bg-success fs-4">{{ system_overview.blockchain_status.title() }}</span>
+                        <p class="text-muted mb-0">Blockchain Status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Auto-refresh dashboard data every 30 seconds
+setInterval(function() {
+    // You can add AJAX calls here to update statistics
+    console.log('Dashboard data refreshed');
+}, 30000);
+</script>
+{% endblock %}

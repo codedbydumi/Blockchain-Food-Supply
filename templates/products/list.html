@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Products - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-boxes me-3"></i>
+            {% if current_user.role == 'farmer' %}
+                My Products
+            {% elif current_user.role in ['distributor', 'retailer'] %}
+                Owned Products
+            {% else %}
+                All Products
+            {% endif %}
+        </h1>
+        <p class="lead text-muted">
+            {% if current_user.role == 'farmer' %}
+                Products you have created and registered
+            {% elif current_user.role in ['distributor', 'retailer'] %}
+                Products currently in your possession
+            {% else %}
+                System-wide product overview
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if current_user.can_create_products() %}
+            <a href="{{ url_for('products.add_product') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-plus me-2"></i>Add New Product
+            </a>
+        {% endif %}
+        <a href="{{ url_for('products.search_products') }}" class="btn btn-outline-primary">
+            <i class="fas fa-search me-2"></i>Search
+        </a>
+    </div>
+</div>
+
+{% if products.items %}
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in products.items %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <!-- Product Status Badge -->
+                    <div class="position-relative">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-{{ 'success' if product.status == 'created' else 'warning' if product.status == 'in_transit' else 'info' if product.status == 'delivered' else 'danger' }}">
+                            {{ product.status.title() }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            <i class="fas fa-leaf me-2"></i>{{ product.name }}
+                        </h5>
+                        
+                        <p class="card-text text-muted">{{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Batch ID:</small><br>
+                                <strong class="text-primary">{{ product.batch_id }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Category:</small><br>
+                                <span class="badge bg-secondary">{{ product.category.title() }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Quantity:</small><br>
+                                <strong>{{ product.quantity }} {{ product.unit }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Quality:</small><br>
+                                {% if product.quality_score %}
+                                    <span class="badge bg-{{ 'success' if product.quality_score >= 80 else 'warning' if product.quality_score >= 60 else 'danger' }}">
+                                        {{ product.quality_score }}/100
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Not rated</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if product.temperature %}
+                            <div class="mb-3">
+                                <small class="text-muted">Environmental Conditions:</small><br>
+                                <i class="fas fa-thermometer-half text-danger me-1"></i>{{ product.temperature }}°C
+                                {% if product.humidity %}
+                                    <i class="fas fa-tint text-info ms-2 me-1"></i>{{ product.humidity }}%
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.is_expired() %}
+                            <div class="alert alert-danger alert-sm mb-3">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Product Expired
+                            </div>
+                        {% elif product.days_until_expiry() and product.days_until_expiry() <= 7 %}
+                            <div class="alert alert-warning alert-sm mb-3">
+                                <i class="fas fa-clock me-1"></i>Expires in {{ product.days_until_expiry() }} days
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-primary">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a>
+                            {% if current_user.id == product.current_owner_id and current_user.can_transfer_products() %}
+                                <a href="{{ url_for('products.transfer_product', id=product.id) }}" class="btn btn-success">
+                                    <i class="fas fa-exchange-alt me-2"></i>Transfer
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if products.pages > 1 %}
+        <nav aria-label="Product pagination">
+            <ul class="pagination justify-content-center">
+                {% if products.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products.list_products', page=products.prev_num) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in products.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != products.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('products.list_products', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products.list_products', page=products.next_num) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+{% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-box-open fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">No Products Found</h3>
+        <p class="lead text-muted mb-4">
+            {% if current_user.role == 'farmer' %}
+                You haven't created any products yet.
+            {% elif current_user.role in ['distributor', 'retailer'] %}
+                You don't own any products currently.
+            {% else %}
+                No products have been registered in the system yet.
+            {% endif %}
+        </p>
+        {% if current_user.can_create_products() %}
+            <a href="{{ url_for('products.add_product') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-plus me-2"></i>Create Your First Product
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
