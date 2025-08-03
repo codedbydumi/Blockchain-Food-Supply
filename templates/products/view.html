@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-leaf me-3"></i>{{ product.name }}
+        </h1>
+        <p class="lead">
+            <span class="badge bg-primary me-2">{{ product.batch_id }}</span>
+            <span class="badge bg-secondary">{{ product.category.title() }}</span>
+            <span class="badge bg-{{ 'success' if product.status == 'created' else 'warning' if product.status == 'in_transit' else 'info' if product.status == 'delivered' else 'danger' }}">
+                {{ product.status.title() }}
+            </span>
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if can_transfer %}
+            <a href="{{ url_for('products.transfer_product', id=product.id) }}" class="btn btn-success btn-lg">
+                <i class="fas fa-exchange-alt me-2"></i>Transfer Product
+            </a>
+        {% endif %}
+        <a href="{{ url_for('products.product_history', id=product.id) }}" class="btn btn-outline-primary">
+            <i class="fas fa-history me-2"></i>Full History
+        </a>
+    </div>
+</div>
+
+<!-- Alert Messages -->
+{% if product.is_expired() %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Product Expired!</strong> This product expired on {{ product.expiry_date.strftime('%B %d, %Y') }}.
+    </div>
+{% elif product.days_until_expiry() and product.days_until_expiry() <= 7 %}
+    <div class="alert alert-warning">
+        <i class="fas fa-clock me-2"></i>
+        <strong>Expiring Soon!</strong> This product will expire in {{ product.days_until_expiry() }} days.
+    </div>
+{% endif %}
+
+<div class="row">
+    <!-- Product Information -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Product Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if product.description %}
+                    <p class="card-text">{{ product.description }}</p>
+                    <hr>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Quantity:</strong><br>
+                        <span class="h5">{{ product.quantity }} {{ product.unit }}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Quality:</strong><br>
+                        {% if product.quality_score %}
+                            <span class="badge bg-{{ 'success' if product.quality_score >= 80 else 'warning' if product.quality_score >= 60 else 'danger' }} fs-6">
+                                {{ product.quality_score }}/100
+                            </span>
+                            {% if product.quality_grade %}
+                                <span class="badge bg-secondary ms-2">{{ product.quality_grade }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Not rated</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Origin:</strong><br>
+                        <i class="fas fa-map-marker-alt text-success me-1"></i>
+                        {{ product.origin_location or 'Not specified' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Current Location:</strong><br>
+                        <i class="fas fa-location-arrow text-info me-1"></i>
+                        {{ product.current_location or 'Not specified' }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Harvest Date:</strong><br>
+                        <i class="fas fa-calendar-alt text-success me-1"></i>
+                        {{ product.harvest_date.strftime('%B %d, %Y') if product.harvest_date else 'Not specified' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Expiry Date:</strong><br>
+                        <i class="fas fa-calendar-times text-danger me-1"></i>
+                        {{ product.expiry_date.strftime('%B %d, %Y') if product.expiry_date else 'Not specified' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Environmental Conditions -->
+        <div class="card shadow mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-thermometer-half me-2"></i>Current Environmental Conditions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if product.temperature is not none %}
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-thermometer-half fa-2x text-danger mb-2"></i>
+                                <h4 class="text-danger">{{ product.temperature }}°C</h4>
+                                <small class="text-muted">Temperature</small>
+                                {% if product.temperature < 0 or product.temperature > 25 %}
+                                    <br><span class="badge bg-warning">Outside Safe Range</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if product.humidity is not none %}
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-tint fa-2x text-info mb-2"></i>
+                                <h4 class="text-info">{{ product.humidity }}%</h4>
+                                <small class="text-muted">Humidity</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if product.pressure is not none %}
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-gauge-high fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning">{{ product.pressure }} hPa</h4>
+                                <small class="text-muted">Pressure</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if not product.temperature and not product.humidity and not product.pressure %}
+                        <div class="col-12 text-center text-muted">
+                            <i class="fas fa-thermometer-empty fa-3x mb-3"></i>
+                            <p>No environmental data recorded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Ownership Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Ownership
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong class="text-muted">Creator:</strong><br>
+                    <i class="fas fa-seedling text-success me-1"></i>
+                    {{ product.creator.full_name }}
+                    <br><small class="text-muted">{{ product.creator.company_name or product.creator.get_role_display() }}</small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong class="text-muted">Current Owner:</strong><br>
+                    <i class="fas fa-user-circle text-primary me-1"></i>
+                    {{ product.current_owner.full_name }}
+                    <br><small class="text-muted">{{ product.current_owner.company_name or product.current_owner.get_role_display() }}</small>
+                </div>
+                
+                <div>
+                    <strong class="text-muted">Created:</strong><br>
+                    <i class="fas fa-clock text-info me-1"></i>
+                    {{ product.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if can_transfer %}
+                        <a href="{{ url_for('products.transfer_product', id=product.id) }}" class="btn btn-success">
+                            <i class="fas fa-exchange-alt me-2"></i>Transfer Product
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('products.product_history', id=product.id) }}" class="btn btn-primary">
+                        <i class="fas fa-history me-2"></i>View Full History
+                    </a>
+                    
+                    <a href="{{ url_for('products.generate_qr_code', id=product.id) }}" class="btn btn-info">
+                        <i class="fas fa-qrcode me-2"></i>Generate QR Code
+                    </a>
+                    
+                    <button class="btn btn-outline-secondary" onclick="copyBatchId()">
+                        <i class="fas fa-copy me-2"></i>Copy Batch ID
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Blockchain Verification -->
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Blockchain Verification
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="mb-2"><strong>Verified on Blockchain</strong></p>
+                    <small class="text-muted">
+                        {{ blockchain_history|length }} blockchain transactions recorded
+                    </small>
+                    
+                    {% if blockchain_history %}
+                        <hr>
+                        <div class="text-start">
+                            <strong class="text-muted">Latest Block:</strong><br>
+                            <code class="small">{{ blockchain_history[-1].block_hash[:20] }}...</code>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+{% if db_transactions %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Location</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in db_transactions[:5] %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if transaction.transaction_type == 'create' else 'primary' if transaction.transaction_type == 'transfer' else 'info' }}">
+                                                {{ transaction.transaction_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.sender.full_name if transaction.sender else 'System' }}</td>
+                                        <td>{{ transaction.receiver.full_name if transaction.receiver else 'System' }}</td>
+                                        <td>{{ transaction.location or 'Not specified' }}</td>
+                                        <td>{{ transaction.timestamp.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                        <td>
+                                            {% if transaction.block_index %}
+                                                <span class="badge bg-success">Confirmed</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if db_transactions|length > 5 %}
+                        <div class="text-center">
+                            <a href="{{ url_for('products.product_history', id=product.id) }}" class="btn btn-outline-primary">
+                                View All {{ db_transactions|length }} Transactions
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function copyBatchId() {
+    const batchId = "{{ product.batch_id }}";
+    navigator.clipboard.writeText(batchId).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

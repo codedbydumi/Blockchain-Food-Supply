@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - FoodChain Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>Register New Product
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <!-- Basic Product Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-success">
+                                <i class="fas fa-info-circle me-2"></i>Basic Information
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Product Name *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   required placeholder="e.g., Organic Tomatoes">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-list me-1"></i>Category *
+                            </label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select category</option>
+                                <option value="vegetables">Vegetables</option>
+                                <option value="fruits">Fruits</option>
+                                <option value="grains">Grains</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="meat">Meat</option>
+                                <option value="seafood">Seafood</option>
+                                <option value="herbs">Herbs & Spices</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Describe your product, farming methods, certifications, etc."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity and Quality -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info">
+                                <i class="fas fa-balance-scale me-2"></i>Quantity & Quality
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="quantity" class="form-label">
+                                <i class="fas fa-weight me-1"></i>Quantity *
+                            </label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   step="0.01" min="0.01" required placeholder="0.00">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="unit" class="form-label">
+                                <i class="fas fa-ruler me-1"></i>Unit *
+                            </label>
+                            <select class="form-select" id="unit" name="unit" required>
+                                <option value="">Select unit</option>
+                                <option value="kg">Kilograms (kg)</option>
+                                <option value="g">Grams (g)</option>
+                                <option value="tons">Tons</option>
+                                <option value="lbs">Pounds (lbs)</option>
+                                <option value="boxes">Boxes</option>
+                                <option value="pieces">Pieces</option>
+                                <option value="liters">Liters</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="quality_grade" class="form-label">
+                                <i class="fas fa-medal me-1"></i>Quality Grade
+                            </label>
+                            <select class="form-select" id="quality_grade" name="quality_grade">
+                                <option value="">Select grade</option>
+                                <option value="A">Grade A (Premium)</option>
+                                <option value="B">Grade B (Standard)</option>
+                                <option value="C">Grade C (Basic)</option>
+                                <option value="Organic">Organic Certified</option>
+                                <option value="Fair Trade">Fair Trade</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="quality_score" class="form-label">
+                                <i class="fas fa-star me-1"></i>Quality Score (0-100)
+                            </label>
+                            <input type="number" class="form-control" id="quality_score" name="quality_score" 
+                                   min="0" max="100" placeholder="85">
+                        </div>
+                    </div>
+                    
+                    <!-- Location and Dates -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-warning">
+                                <i class="fas fa-map-marker-alt me-2"></i>Location & Timeline
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="origin_location" class="form-label">
+                                <i class="fas fa-home me-1"></i>Origin Location
+                            </label>
+                            <input type="text" class="form-control" id="origin_location" name="origin_location" 
+                                   placeholder="Farm name, city, state/country">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="current_location" class="form-label">
+                                <i class="fas fa-location-arrow me-1"></i>Current Location
+                            </label>
+                            <input type="text" class="form-control" id="current_location" name="current_location" 
+                                   placeholder="Current storage location">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="harvest_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>Harvest/Production Date
+                            </label>
+                            <input type="date" class="form-control" id="harvest_date" name="harvest_date">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="expiry_date" class="form-label">
+                                <i class="fas fa-calendar-times me-1"></i>Expiry Date
+                            </label>
+                            <input type="date" class="form-control" id="expiry_date" name="expiry_date">
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental Conditions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-danger">
+                                <i class="fas fa-thermometer-half me-2"></i>Environmental Conditions
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="temperature" class="form-label">
+                                <i class="fas fa-thermometer-half me-1"></i>Storage Temperature (°C)
+                            </label>
+                            <input type="number" class="form-control" id="temperature" name="temperature" 
+                                   step="0.1" placeholder="18.5">
+                            <div class="form-text">Optimal range: 0-25°C for most products</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="humidity" class="form-label">
+                                <i class="fas fa-tint me-1"></i>Humidity (%)
+                            </label>
+                            <input type="number" class="form-control" id="humidity" name="humidity" 
+                                   min="0" max="100" step="0.1" placeholder="65.0">
+                            <div class="form-text">Relative humidity percentage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Register Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Set today as default harvest date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('harvest_date').value = today;
+    
+    // Auto-calculate expiry date (30 days from harvest)
+    document.getElementById('harvest_date').addEventListener('change', function() {
+        const harvestDate = new Date(this.value);
+        const expiryDate = new Date(harvestDate);
+        expiryDate.setDate(expiryDate.getDate() + 30);
+        document.getElementById('expiry_date').value = expiryDate.toISOString().split('T')[0];
+    });
+});
+</script>
+{% endblock %}
