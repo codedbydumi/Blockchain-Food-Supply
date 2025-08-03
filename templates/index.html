@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Blockchain Food Supply Chain{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center py-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold text-success">
+            <i class="fas fa-leaf me-3"></i>
+            Farm to Fork Transparency
+        </h1>
+        <p class="lead text-muted mb-4">
+            Track your food's journey from farm to your table using secure blockchain technology. 
+            Ensure food safety, quality, and authenticity with complete supply chain visibility.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg px-4 me-md-2">
+                <i class="fas fa-user-plus me-2"></i>Get Started
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success btn-lg px-4">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <img src="https://via.placeholder.com/500x400/28a745/ffffff?text=Blockchain+Supply+Chain" 
+             class="img-fluid rounded shadow" alt="Supply Chain Illustration">
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row py-5">
+    <div class="col-12 text-center mb-5">
+        <h2 class="display-5 fw-bold">Why Choose FoodChain Tracker?</h2>
+        <p class="lead text-muted">Revolutionizing food safety with blockchain technology</p>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 60px; height: 60px;">
+                    <i class="fas fa-shield-alt fa-lg"></i>
+                </div>
+                <h5 class="card-title">Blockchain Security</h5>
+                <p class="card-text text-muted">
+                    Immutable records ensure data integrity and prevent tampering. 
+                    Every transaction is cryptographically secured and verified.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 60px; height: 60px;">
+                    <i class="fas fa-search fa-lg"></i>
+                </div>
+                <h5 class="card-title">Full Traceability</h5>
+                <p class="card-text text-muted">
+                    Track products from farm to fork. Complete visibility into 
+                    origin, handling, storage conditions, and quality metrics.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 60px; height: 60px;">
+                    <i class="fas fa-chart-line fa-lg"></i>
+                </div>
+                <h5 class="card-title">Smart Analytics</h5>
+                <p class="card-text text-muted">
+                    Advanced analytics for fraud detection, quality monitoring, 
+                    and supply chain optimization with real-time insights.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="row py-5 bg-light rounded">
+    <div class="col-12 text-center mb-5">
+        <h2 class="display-5 fw-bold">How It Works</h2>
+        <p class="lead text-muted">Simple steps to transparent supply chain</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="position-relative">
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                 style="width: 80px; height: 80px;">
+                <i class="fas fa-seedling fa-2x"></i>
+            </div>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">1</span>
+        </div>
+        <h5>Farm Registration</h5>
+        <p class="text-muted">Farmers register products with origin, quality, and environmental data</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="position-relative">
+            <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                 style="width: 80px; height: 80px;">
+                <i class="fas fa-truck fa-2x"></i>
+            </div>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">2</span>
+        </div>
+        <h5>Supply Chain Transfer</h5>
+        <p class="text-muted">Products move through distributors with tracked conditions and locations</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="position-relative">
+            <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                 style="width: 80px; height: 80px;">
+                <i class="fas fa-store fa-2x"></i>
+            </div>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">3</span>
+        </div>
+        <h5>Retail Distribution</h5>
+        <p class="text-muted">Retailers receive products with complete history and quality verification</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="position-relative">
+            <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                 style="width: 80px; height: 80px;">
+                <i class="fas fa-utensils fa-2x"></i>
+            </div>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">4</span>
+        </div>
+        <h5>Consumer Access</h5>
+        <p class="text-muted">Consumers can verify product authenticity and journey via QR codes</p>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row py-5 text-center">
+    <div class="col-md-3 mb-4">
+        <h3 class="display-4 fw-bold text-success">1000+</h3>
+        <p class="text-muted">Products Tracked</p>
+    </div>
+    <div class="col-md-3 mb-4">
+        <h3 class="display-4 fw-bold text-info">50+</h3>
+        <p class="text-muted">Stakeholders</p>
+    </div>
+    <div class="col-md-3 mb-4">
+        <h3 class="display-4 fw-bold text-warning">99.9%</h3>
+        <p class="text-muted">Data Integrity</p>
+    </div>
+    <div class="col-md-3 mb-4">
+        <h3 class="display-4 fw-bold text-danger">24/7</h3>
+        <p class="text-muted">Monitoring</p>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="row py-5">
+    <div class="col-12 text-center">
+        <div class="bg-success text-white rounded p-5">
+            <h2 class="display-5 fw-bold mb-3">Ready to Transform Your Supply Chain?</h2>
+            <p class="lead mb-4">Join the revolution in food safety and transparency</p>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-5">
+                <i class="fas fa-rocket me-2"></i>Start Your Journey
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
