@@ -54,20 +54,46 @@ def add_product():
         return redirect(url_for('products.list_products'))
     
     if request.method == 'POST':
-        # Get form data
+        # Get form data with safe conversions
         name = request.form.get('name')
         category = request.form.get('category')
         description = request.form.get('description')
-        quantity = float(request.form.get('quantity', 0))
+        
+        # Safe float conversion for quantity
+        try:
+            quantity_str = request.form.get('quantity', '0')
+            quantity = float(quantity_str) if quantity_str.strip() else 0.0
+        except (ValueError, TypeError):
+            quantity = 0.0
+            
         unit = request.form.get('unit')
         quality_grade = request.form.get('quality_grade')
-        quality_score = int(request.form.get('quality_score', 0))
+        
+        # Safe int conversion for quality score
+        try:
+            quality_score_str = request.form.get('quality_score', '0')
+            quality_score = int(quality_score_str) if quality_score_str.strip() else 0
+        except (ValueError, TypeError):
+            quality_score = 0
+            
         origin_location = request.form.get('origin_location')
         current_location = request.form.get('current_location')
         harvest_date = request.form.get('harvest_date')
         expiry_date = request.form.get('expiry_date')
-        temperature = float(request.form.get('temperature', 0))
-        humidity = float(request.form.get('humidity', 0))
+        
+        # Safe float conversion for temperature
+        try:
+            temperature_str = request.form.get('temperature', '')
+            temperature = float(temperature_str) if temperature_str.strip() else None
+        except (ValueError, TypeError):
+            temperature = None
+            
+        # Safe float conversion for humidity
+        try:
+            humidity_str = request.form.get('humidity', '')
+            humidity = float(humidity_str) if humidity_str.strip() else None
+        except (ValueError, TypeError):
+            humidity = None
         
         # Validate input
         errors = []
@@ -82,14 +108,21 @@ def add_product():
         if quality_score < 0 or quality_score > 100:
             errors.append('Quality score must be between 0 and 100.')
         
-        # Parse dates
+        # Parse dates safely
+        harvest_date_obj = None
+        expiry_date_obj = None
+        
         try:
-            if harvest_date:
-                harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
-            if expiry_date:
-                expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
+            if harvest_date and harvest_date.strip():
+                harvest_date_obj = datetime.strptime(harvest_date, '%Y-%m-%d').date()
         except ValueError:
-            errors.append('Invalid date format.')
+            errors.append('Invalid harvest date format.')
+            
+        try:
+            if expiry_date and expiry_date.strip():
+                expiry_date_obj = datetime.strptime(expiry_date, '%Y-%m-%d').date()
+        except ValueError:
+            errors.append('Invalid expiry date format.')
         
         if errors:
             for error in errors:
@@ -108,8 +141,8 @@ def add_product():
                 quality_score=quality_score,
                 origin_location=origin_location,
                 current_location=current_location,
-                harvest_date=harvest_date,
-                expiry_date=expiry_date,
+                harvest_date=harvest_date_obj,
+                expiry_date=expiry_date_obj,
                 temperature=temperature,
                 humidity=humidity,
                 created_by=current_user.id
@@ -190,12 +223,34 @@ def transfer_product(id):
     if request.method == 'POST':
         # Get form data
         to_user_id = int(request.form.get('to_user_id'))
-        quantity = float(request.form.get('quantity', product.quantity))
+        quantity = float(product.quantity)  # Use full quantity for now
         location = request.form.get('location')
-        latitude = request.form.get('latitude')
-        longitude = request.form.get('longitude')
-        temperature = request.form.get('temperature')
-        humidity = request.form.get('humidity')
+        
+        # Safe conversions for optional fields
+        try:
+            latitude_str = request.form.get('latitude', '')
+            latitude = float(latitude_str) if latitude_str.strip() else None
+        except (ValueError, TypeError):
+            latitude = None
+            
+        try:
+            longitude_str = request.form.get('longitude', '')
+            longitude = float(longitude_str) if longitude_str.strip() else None
+        except (ValueError, TypeError):
+            longitude = None
+            
+        try:
+            temperature_str = request.form.get('temperature', '')
+            temperature = float(temperature_str) if temperature_str.strip() else None
+        except (ValueError, TypeError):
+            temperature = None
+            
+        try:
+            humidity_str = request.form.get('humidity', '')
+            humidity = float(humidity_str) if humidity_str.strip() else None
+        except (ValueError, TypeError):
+            humidity = None
+            
         vehicle_id = request.form.get('vehicle_id')
         transport_method = request.form.get('transport_method')
         notes = request.form.get('notes')
@@ -210,27 +265,17 @@ def transfer_product(id):
             flash(f'{to_user.get_role_display()} cannot receive products.', 'danger')
             return render_template('products/transfer.html', product=product)
         
-        if quantity <= 0 or quantity > product.quantity:
-            flash('Invalid quantity specified.', 'danger')
-            return render_template('products/transfer.html', product=product)
-        
         try:
-            # Parse coordinates if provided
-            lat = float(latitude) if latitude else None
-            lng = float(longitude) if longitude else None
-            temp = float(temperature) if temperature else None
-            hum = float(humidity) if humidity else None
-            
             # Transfer ownership
             old_owner_id = product.transfer_ownership(to_user_id)
             
             # Update product location and conditions
             if location:
                 product.current_location = location
-            if temp is not None:
-                product.temperature = temp
-            if hum is not None:
-                product.humidity = hum
+            if temperature is not None:
+                product.temperature = temperature
+            if humidity is not None:
+                product.humidity = humidity
             
             db.session.commit()
             
@@ -242,10 +287,10 @@ def transfer_product(id):
                 transaction_type='transfer',
                 quantity=quantity,
                 location=location,
-                latitude=lat,
-                longitude=lng,
-                temperature=temp,
-                humidity=hum,
+                latitude=latitude,
+                longitude=longitude,
+                temperature=temperature,
+                humidity=humidity,
                 vehicle_id=vehicle_id,
                 transport_method=transport_method,
                 notes=notes
@@ -357,7 +402,6 @@ def search_products():
 def api_product_by_batch(batch_id):
     """
     API endpoint to get product information by batch ID
-    Useful for QR code scanning
     """
     product = Product.query.filter_by(batch_id=batch_id).first()
     if not product:
