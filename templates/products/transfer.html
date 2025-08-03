@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer Product - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-exchange-alt me-3"></i>Transfer Product
+        </h1>
+        <p class="lead">
+            <span class="badge bg-primary me-2">{{ product.batch_id }}</span>
+            {{ product.name }}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Product
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>Transfer Product Ownership
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <!-- Recipient Selection -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary">
+                                <i class="fas fa-user me-2"></i>Recipient Information
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="to_user_id" class="form-label">
+                                <i class="fas fa-users me-1"></i>Transfer To *
+                            </label>
+                            <select class="form-select" id="to_user_id" name="to_user_id" required>
+                                <option value="">Select recipient</option>
+                                {% for recipient in recipients %}
+                                    <option value="{{ recipient.id }}">
+                                        {{ recipient.full_name }} - {{ recipient.company_name or recipient.get_role_display() }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Transfer Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info">
+                                <i class="fas fa-info-circle me-2"></i>Transfer Details
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="quantity" class="form-label">
+                                <i class="fas fa-weight me-1"></i>Quantity *
+                            </label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   step="0.01" min="0.01" max="{{ product.quantity }}" 
+                                   value="{{ product.quantity }}" required>
+                            <div class="form-text">Available: {{ product.quantity }} {{ product.unit }}</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>New Location
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="Destination location">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="latitude" class="form-label">
+                                <i class="fas fa-globe me-1"></i>Latitude
+                            </label>
+                            <input type="number" class="form-control" id="latitude" name="latitude" 
+                                   step="0.000001" placeholder="40.7128">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="longitude" class="form-label">
+                                <i class="fas fa-globe me-1"></i>Longitude
+                            </label>
+                            <input type="number" class="form-control" id="longitude" name="longitude" 
+                                   step="0.000001" placeholder="-74.0060">
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental Conditions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-danger">
+                                <i class="fas fa-thermometer-half me-2"></i>Environmental Conditions
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="temperature" class="form-label">
+                                <i class="fas fa-thermometer-half me-1"></i>Temperature (°C)
+                            </label>
+                            <input type="number" class="form-control" id="temperature" name="temperature" 
+                                   step="0.1" placeholder="18.5">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="humidity" class="form-label">
+                                <i class="fas fa-tint me-1"></i>Humidity (%)
+                            </label>
+                            <input type="number" class="form-control" id="humidity" name="humidity" 
+                                   min="0" max="100" step="0.1" placeholder="65.0">
+                        </div>
+                    </div>
+                    
+                    <!-- Transport Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-secondary">
+                                <i class="fas fa-truck me-2"></i>Transport Information
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="vehicle_id" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>Vehicle ID
+                            </label>
+                            <input type="text" class="form-control" id="vehicle_id" name="vehicle_id" 
+                                   placeholder="e.g., TRUCK001">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="transport_method" class="form-label">
+                                <i class="fas fa-shipping-fast me-1"></i>Transport Method
+                            </label>
+                            <select class="form-select" id="transport_method" name="transport_method">
+                                <option value="">Select method</option>
+                                <option value="truck">Truck</option>
+                                <option value="ship">Ship</option>
+                                <option value="plane">Plane</option>
+                                <option value="train">Train</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="notes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>Transfer Notes
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Additional notes about this transfer..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('products.view_product', id=product.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-exchange-alt me-2"></i>Transfer Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Auto-fill current location if available
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+        document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+    });
+}
+</script>
+{% endblock %}
