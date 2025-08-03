@@ -157,11 +157,10 @@ def get_quality_trends_data(start_date, end_date):
     ).group_by(func.date(Product.created_at)).order_by('date').all()
     
     return [{
-        'date': date.isoformat(),
-        'avg_quality': round(avg_quality, 1),
+        'date': str(date),  # ✅ Fixed: Convert to string directly
+        'avg_quality': round(avg_quality, 1) if avg_quality else 0,
         'product_count': product_count
     } for date, avg_quality, product_count in daily_quality]
-
 def get_temperature_analysis_data():
     """
     Analyze temperature data for cold chain compliance

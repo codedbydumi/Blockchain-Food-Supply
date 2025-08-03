@@ -151,7 +151,8 @@ class Product(db.Model):
         """
         Get all transactions for this product
         """
-        return self.transactions.order_by('Transaction.timestamp.desc()').all()
+        from models.blockchain import Transaction  # Add this import
+        return self.transactions.order_by(Transaction.timestamp.desc()).all()
 
     def get_current_location_info(self):
         """
