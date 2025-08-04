@@ -613,3 +613,141 @@ window.FoodChainTracker = {
     refreshDashboardData,
     updateProductStatus
 };
+
+// Modern UI/UX Enhancements
+
+// Add loading states to all forms
+document.addEventListener('DOMContentLoaded', function() {
+    initializeModernUI();
+});
+
+function initializeModernUI() {
+    addLoadingStates();
+    addAnimations();
+    addInteractiveElements();
+    addModernNotifications();
+    addProgressIndicators();
+}
+
+// Enhanced Loading States
+function addLoadingStates() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Processing...';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('animate-pulse');
+            }
+        });
+    });
+}
+
+// Add entrance animations
+function addAnimations() {
+    const cards = document.querySelectorAll('.card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('animate-slideInUp');
+                }, index * 100);
+            }
+        });
+    });
+    
+    cards.forEach(card => observer.observe(card));
+}
+
+// Interactive elements
+function addInteractiveElements() {
+    // Add hover effects to statistics cards
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Add ripple effect to buttons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const ripple = document.createElement('div');
+            ripple.classList.add('ripple');
+            this.appendChild(ripple);
+            
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+}
+
+// Modern notification system
+function addModernNotifications() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        alert.style.transform = 'translateX(100%)';
+        alert.style.opacity = '0';
+        
+        setTimeout(() => {
+            alert.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            alert.style.transform = 'translateX(0)';
+            alert.style.opacity = '1';
+        }, 100);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alert.style.transform = 'translateX(100%)';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+}
+
+// Progress indicators for forms
+function addProgressIndicators() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        const steps = form.querySelectorAll('.form-step');
+        if (steps.length > 1) {
+            addFormProgressBar(form, steps);
+        }
+    });
+}
+
+// Add CSS for ripple effect
+const style = document.createElement('style');
+style.textContent = `
+.ripple {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+`;
+document.head.appendChild(style);
