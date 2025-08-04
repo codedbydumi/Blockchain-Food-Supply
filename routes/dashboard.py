@@ -129,35 +129,76 @@ def get_recent_activities(user, limit=10):
     """
     activities = []
     
-    # Get recent transactions involving this user
+    # Get recent transactions involving this user (avoid duplicates)
     recent_transactions = Transaction.query.filter(
         (Transaction.from_user_id == user.id) | (Transaction.to_user_id == user.id)
     ).order_by(desc(Transaction.timestamp)).limit(limit).all()
     
     for transaction in recent_transactions:
-        activity_type = 'sent' if transaction.from_user_id == user.id else 'received'
-        activities.append({
-            'type': activity_type,
-            'description': f"{activity_type.title()} {transaction.product.name}",
-            'timestamp': transaction.timestamp,
-            'transaction': transaction
-        })
+        # Determine activity type based on transaction type and user role
+        if transaction.transaction_type == 'create':
+            # Only show "Created" for product creation
+            if transaction.from_user_id == user.id:
+                activities.append({
+                    'type': 'created',
+                    'description': f"Created {transaction.product.name}",
+                    'timestamp': transaction.timestamp,
+                    'transaction': transaction
+                })
+        elif transaction.transaction_type == 'transfer':
+            # Only show transfer activities for actual transfers
+            if transaction.from_user_id == user.id and transaction.to_user_id != user.id:
+                # User sent the product to someone else
+                to_user = User.query.get(transaction.to_user_id)
+                activities.append({
+                    'type': 'sent',
+                    'description': f"Sent {transaction.product.name} to {to_user.full_name if to_user else 'Unknown'}",
+                    'timestamp': transaction.timestamp,
+                    'transaction': transaction
+                })
+            elif transaction.to_user_id == user.id and transaction.from_user_id != user.id:
+                # User received the product from someone else
+                from_user = User.query.get(transaction.from_user_id)
+                activities.append({
+                    'type': 'received',
+                    'description': f"Received {transaction.product.name} from {from_user.full_name if from_user else 'Unknown'}",
+                    'timestamp': transaction.timestamp,
+                    'transaction': transaction
+                })
     
-    # Get recently created products (for farmers)
+    # Get recently created products (for farmers) - but only if not already in transactions
     if user.role == 'farmer':
         recent_products = user.products_created.order_by(desc(Product.created_at)).limit(5).all()
+        existing_product_ids = [activity['transaction'].product_id for activity in activities if 'transaction' in activity]
+        
         for product in recent_products:
-            activities.append({
-                'type': 'created',
-                'description': f"Created {product.name}",
-                'timestamp': product.created_at,
-                'product': product
-            })
+            if product.id not in existing_product_ids:
+                activities.append({
+                    'type': 'created',
+                    'description': f"Created {product.name}",
+                    'timestamp': product.created_at,
+                    'product': product
+                })
     
-    # Sort activities by timestamp
+    # Sort activities by timestamp and remove duplicates
     activities.sort(key=lambda x: x['timestamp'], reverse=True)
     
-    return activities[:limit]
+    # Remove duplicate activities for the same product
+    seen_activities = set()
+    unique_activities = []
+    
+    for activity in activities:
+        # Create a unique key for each activity
+        if 'transaction' in activity:
+            key = f"{activity['type']}_{activity['transaction'].product_id}_{activity['timestamp']}"
+        else:
+            key = f"{activity['type']}_{activity['product'].id}_{activity['timestamp']}"
+        
+        if key not in seen_activities:
+            seen_activities.add(key)
+            unique_activities.append(activity)
+    
+    return unique_activities[:limit]
 
 def get_system_overview():
     """
