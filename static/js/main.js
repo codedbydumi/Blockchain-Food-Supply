@@ -8,18 +8,108 @@ let notificationTimeout;
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    initializeThemeToggle();
 });
 
 // Main initialization function
 function initializeApp() {
     setupEventListeners();
     initializeTooltips();
-    setupFormSubmissions();  // ← Changed from setupFormValidation
+    setupFormSubmissions();
     startAutoRefresh();
     setupNotifications();
     initializeCharts();
     setupSearchFunctionality();
 }
+
+// ===================================
+// THEME TOGGLE FUNCTIONALITY
+// ===================================
+
+function initializeThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    const body = document.body;
+    
+    // Check for saved theme preference or default to light
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the saved theme
+    if (currentTheme === 'dark') {
+        body.setAttribute('data-theme', 'dark');
+        updateThemeToggleUI(true);
+    } else {
+        body.setAttribute('data-theme', 'light');
+        updateThemeToggleUI(false);
+    }
+    
+    // Theme toggle event listener
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            
+            if (isDark) {
+                // Switch to light theme
+                body.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                updateThemeToggleUI(false);
+                showThemeNotification('Light theme activated');
+            } else {
+                // Switch to dark theme
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                updateThemeToggleUI(true);
+                showThemeNotification('Dark theme activated');
+            }
+        });
+    }
+}
+
+function updateThemeToggleUI(isDark) {
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    
+    if (isDark) {
+        themeIcon.className = 'fas fa-sun';
+        if (themeText) themeText.textContent = 'Light';
+    } else {
+        themeIcon.className = 'fas fa-moon';
+        if (themeText) themeText.textContent = 'Dark';
+    }
+}
+
+function showThemeNotification(message) {
+    // Use existing notification system if available
+    if (typeof showNotification === 'function') {
+        showNotification(message, 'info', 2000);
+    } else {
+        // Simple fallback notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info position-fixed';
+        notification.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 250px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-palette me-2"></i>${message}
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 2000);
+    }
+}
+
+// ===================================
+// EXISTING FUNCTIONALITY
+// ===================================
+
 // Event Listeners
 function setupEventListeners() {
     // Navigation active states
@@ -611,143 +701,452 @@ window.FoodChainTracker = {
     showNotification,
     copyToClipboard,
     refreshDashboardData,
-    updateProductStatus
+    updateProductStatus,
+    initializeThemeToggle
 };
 
-// Modern UI/UX Enhancements
-
-// Add loading states to all forms
-document.addEventListener('DOMContentLoaded', function() {
-    initializeModernUI();
-});
-
-function initializeModernUI() {
-    addLoadingStates();
-    addAnimations();
-    addInteractiveElements();
-    addModernNotifications();
-    addProgressIndicators();
+// Clear search results
+function clearSearchResults() {
+    const resultsContainer = document.querySelector('#search-results');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+    }
 }
 
-// Enhanced Loading States
-function addLoadingStates() {
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function() {
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Processing...';
-                submitBtn.disabled = true;
-                submitBtn.classList.add('animate-pulse');
+// Update recent activities
+function updateRecentActivities(data) {
+    const activitiesContainer = document.querySelector('#recent-activities');
+    if (!activitiesContainer) return;
+    
+    if (data.length === 0) {
+        activitiesContainer.innerHTML = '<p class="text-muted">No recent activities found.</p>';
+        return;
+    }
+    
+    let html = '<div class="timeline">';
+    data.forEach(activity => {
+        html += `
+            <div class="timeline-item d-flex mb-3">
+                <div class="timeline-marker">
+                    <i class="fas fa-${activity.icon || 'circle'} text-${activity.type || 'primary'}"></i>
+                </div>
+                <div class="timeline-content ms-3">
+                    <h6 class="mb-1">${activity.description}</h6>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        ${activity.timestamp}
+                    </small>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    activitiesContainer.innerHTML = html;
+}
+
+// Batch ID copy functionality
+function copyBatchId(batchId) {
+    copyToClipboard(batchId);
+}
+
+// Product status tracking
+function trackProduct(productId) {
+    if (!productId) return;
+    
+    fetch(`/products/api/${productId}/track`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateProductDisplay(data.product);
+                showNotification('Product status updated', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Product tracking error:', error);
+            showNotification('Failed to update product status', 'danger');
+        });
+}
+
+// Form enhancement for file uploads
+function setupFileUploads() {
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const fileName = this.files[0]?.name;
+            const label = this.nextElementSibling;
+            
+            if (fileName && label) {
+                label.textContent = fileName;
+                label.classList.add('text-success');
             }
         });
     });
 }
 
-// Add entrance animations
-function addAnimations() {
-    const cards = document.querySelectorAll('.card');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => {
-                    entry.target.classList.add('animate-slideInUp');
-                }, index * 100);
+// Enhanced form validation with real-time feedback
+function setupRealtimeValidation() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+                validateField(this);
             }
         });
     });
+}
+
+function validateField(field) {
+    const value = field.value.trim();
+    const isRequired = field.hasAttribute('required');
     
-    cards.forEach(card => observer.observe(card));
-}
-
-// Interactive elements
-function addInteractiveElements() {
-    // Add hover effects to statistics cards
-    const statsCards = document.querySelectorAll('.stats-card');
-    statsCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-8px) scale(1.02)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
+    // Clear previous validation
+    clearFieldError(field);
     
-    // Add ripple effect to buttons
-    const buttons = document.querySelectorAll('.btn');
-    buttons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const ripple = document.createElement('div');
-            ripple.classList.add('ripple');
-            this.appendChild(ripple);
-            
-            const rect = this.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-            
-            setTimeout(() => ripple.remove(), 600);
+    // Required field validation
+    if (isRequired && !value) {
+        showFieldError(field, 'This field is required');
+        return false;
+    }
+    
+    // Email validation
+    if (field.type === 'email' && value && !isValidEmail(value)) {
+        showFieldError(field, 'Please enter a valid email address');
+        return false;
+    }
+    
+    // Number validation
+    if (field.type === 'number' && value) {
+        const min = parseFloat(field.getAttribute('min'));
+        const max = parseFloat(field.getAttribute('max'));
+        const numValue = parseFloat(value);
+        
+        if (!isNaN(min) && numValue < min) {
+            showFieldError(field, `Value must be at least ${min}`);
+            return false;
+        }
+        
+        if (!isNaN(max) && numValue > max) {
+            showFieldError(field, `Value must be no more than ${max}`);
+            return false;
+        }
+    }
+    
+    // Show success state
+    field.classList.add('is-valid');
+    return true;
+}
+
+// QR Code functionality
+function generateQRCode(productId) {
+    if (!productId) return;
+    
+    window.open(`/products/${productId}/qr-code`, '_blank');
+}
+
+// Print functionality
+function printPage() {
+    window.print();
+}
+
+function printElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { font-family: Arial, sans-serif; }
+                @media print {
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            ${element.innerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Data export functionality
+function exportData(format, data, filename) {
+    if (format === 'csv') {
+        exportToCSV(data, filename);
+    } else if (format === 'json') {
+        exportToJSON(data, filename);
+    }
+}
+
+function exportToCSV(data, filename) {
+    if (!data || data.length === 0) return;
+    
+    const csvContent = [
+        Object.keys(data[0]).join(','),
+        ...data.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    downloadFile(csvContent, `${filename}.csv`, 'text/csv');
+}
+
+function exportToJSON(data, filename) {
+    const jsonContent = JSON.stringify(data, null, 2);
+    downloadFile(jsonContent, `${filename}.json`, 'application/json');
+}
+
+function downloadFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
+
+// Geolocation functionality
+function getCurrentLocation(callback) {
+    if (!navigator.geolocation) {
+        showNotification('Geolocation is not supported by this browser', 'warning');
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            const { latitude, longitude } = position.coords;
+            callback({ latitude, longitude });
+        },
+        error => {
+            console.error('Geolocation error:', error);
+            showNotification('Unable to get your location', 'warning');
+        }
+    );
+}
+
+// Auto-fill location fields
+function fillLocationFields() {
+    getCurrentLocation(location => {
+        const latField = document.getElementById('latitude');
+        const lngField = document.getElementById('longitude');
+        
+        if (latField) latField.value = location.latitude.toFixed(6);
+        if (lngField) lngField.value = location.longitude.toFixed(6);
+        
+        showNotification('Location filled automatically', 'success');
+    });
+}
+
+// Blockchain verification
+function verifyBlockchainRecord(recordId) {
+    if (!recordId) return;
+    
+    fetch(`/api/blockchain/verify/${recordId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.verified) {
+                showNotification('Blockchain record verified successfully', 'success');
+            } else {
+                showNotification('Blockchain verification failed', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Verification error:', error);
+            showNotification('Error verifying blockchain record', 'danger');
         });
+}
+
+// Advanced search functionality
+function setupAdvancedSearch() {
+    const searchForm = document.getElementById('advanced-search-form');
+    if (!searchForm) return;
+    
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const searchParams = new URLSearchParams();
+        
+        for (const [key, value] of formData.entries()) {
+            if (value.trim()) {
+                searchParams.append(key, value);
+            }
+        }
+        
+        fetch(`/api/advanced-search?${searchParams}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySearchResults(data);
+                showNotification(`Found ${data.length} results`, 'info');
+            })
+            .catch(error => {
+                console.error('Advanced search error:', error);
+                showNotification('Search failed', 'danger');
+            });
     });
 }
 
-// Modern notification system
-function addModernNotifications() {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        alert.style.transform = 'translateX(100%)';
-        alert.style.opacity = '0';
+// Keyboard shortcuts
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K for search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.querySelector('input[type="search"], input[name="q"]');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
         
-        setTimeout(() => {
-            alert.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-            alert.style.transform = 'translateX(0)';
-            alert.style.opacity = '1';
-        }, 100);
+        // Ctrl/Cmd + D for dark mode toggle
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.click();
+            }
+        }
         
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            alert.style.transform = 'translateX(100%)';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        }, 5000);
-    });
-}
-
-// Progress indicators for forms
-function addProgressIndicators() {
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        const steps = form.querySelectorAll('.form-step');
-        if (steps.length > 1) {
-            addFormProgressBar(form, steps);
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                const modalInstance = bootstrap.Modal.getInstance(openModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
         }
     });
 }
 
-// Add CSS for ripple effect
+// Initialize additional features
+document.addEventListener('DOMContentLoaded', function() {
+    setupFileUploads();
+    setupRealtimeValidation();
+    setupAdvancedSearch();
+    setupKeyboardShortcuts();
+});
+
+// Add CSS for animations and additional styling
 const style = document.createElement('style');
 style.textContent = `
-.ripple {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple-animation 0.6s ease-out;
-    pointer-events: none;
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
-@keyframes ripple-animation {
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
     to {
-        transform: scale(2);
+        transform: translateX(100%);
         opacity: 0;
     }
 }
 
-.btn {
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.hover-scale {
+    transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+    transform: scale(1.02);
+}
+
+.timeline {
     position: relative;
-    overflow: hidden;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--primary);
+    opacity: 0.3;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--bg-card);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 `;
 document.head.appendChild(style);

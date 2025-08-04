@@ -9,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
@@ -18,7 +20,7 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-leaf me-2"></i>
@@ -57,6 +59,17 @@
                     {% endif %}
                 </ul>
                 
+                <!-- Theme Toggle Button -->
+                <ul class="navbar-nav me-3">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-secondary btn-sm theme-toggle" id="themeToggle" type="button">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                            <span class="ms-2 d-none d-md-inline" id="themeText">Dark</span>
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- User Navigation -->
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item dropdown">
@@ -134,7 +147,7 @@
                     <p class="mb-0">
                         <i class="fas fa-shield-alt me-1"></i>Secured by Blockchain Technology
                     </p>
-                    <small class="text-muted">© 2024 FoodChain Tracker. All rights reserved.</small>
+                    <small class="text-muted">© 2025 FoodChain Tracker <a href="https://github.com/codedbydumi">{Codedbydumi}.</a> All rights reserved.</small>
                 </div>
             </div>
         </div>
