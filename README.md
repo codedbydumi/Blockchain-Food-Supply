@@ -111,7 +111,7 @@ graph TB
     K --> L[SQLAlchemy ORM]
     L --> M[(PostgreSQL/SQLite)]
     
-    subgraph "External Integrations soon.."
+    subgraph "External Integrations (soon.. )"
         N[IoT Sensors]
         O[GPS Tracking]
         P[Government APIs]
