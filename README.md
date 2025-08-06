@@ -14,7 +14,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-[🚀 Live Demo](#) • [📖 Documentation](#features) • [🐛 Report Bug](../../issues) • [✨ Request Feature](../../issues)
+[🚀 Live Demo](https://foodchain.duminduthushan.com/) • [📖 Documentation](#features) • [🐛 Report Bug](../../issues) • [✨ Request Feature](../../issues)
 
 </div>
 
@@ -35,7 +35,7 @@
 - [🚀 Deployment](#-deployment)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
-- [👥 Team](#-team)
+
 
 ---
 
@@ -481,7 +481,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ```
 MIT License
 
-Copyright (c) 2024 FoodChain Tracker Team
+Copyright (c) 2025 FoodChain Tracker Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -496,28 +496,6 @@ copies or substantial portions of the Software.
 
 ---
 
-## 👥 Team
-
-<div align="center">
-
-### 🌟 Core Team
-
-| Avatar | Name | Role | GitHub | LinkedIn |
-|--------|------|------|--------|----------|
-| 👨‍💻 | **Your Name** | Lead Developer | [@yourusername](https://github.com/yourusername) | [LinkedIn](https://linkedin.com/in/yourname) |
-| 👩‍💼 | **Team Member** | Blockchain Expert | [@teammate](https://github.com/teammate) | [LinkedIn](https://linkedin.com/in/teammate) |
-
-### 🙏 Contributors
-
-Thanks to all our amazing contributors! 
-
-<a href="https://github.com/yourusername/foodchain-tracker/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=yourusername/foodchain-tracker" />
-</a>
-
-</div>
-
----
 
 ## 📊 Project Stats
 
@@ -555,13 +533,12 @@ Thanks to all our amazing contributors!
 
 ### 💬 Get Help
 
-[![Discord](https://img.shields.io/discord/123456789?color=7289da&label=Discord&logo=discord&logoColor=white&style=for-the-badge)](https://discord.gg/foodchain)
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/foodchaintracker)
-[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:support@foodchaintracker.com)
+
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:duminduthushan9@gmail.com)
 
 ### 🌐 Links
 
-[🏠 Website](https://foodchaintracker.com) •
+[🏠 Website](https://foodchain.duminduthushan.com/) •
 [📖 Documentation](https://docs.foodchaintracker.com) •
 [🐛 Issues](../../issues) •
 [💡 Feature Requests](../../issues/new?template=feature_request.md) •
