@@ -546,7 +546,7 @@ copies or substantial portions of the Software.
 
 ---
 
-**Made with ❤️ for a more transparent and sustainable food system**
+**Made with ❤️ by [**codedbydumi**](https://github.com/codedbydumi) for a more transparent and sustainable food system**
 
 *"Transforming food supply chains, one block at a time"*
 
