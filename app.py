@@ -20,6 +20,7 @@ from routes.dashboard import dashboard_bp
 from routes.products import products_bp
 from routes.analytics import analytics_bp
 
+
 def create_app(config_name='development'):
     """
     Application factory pattern
