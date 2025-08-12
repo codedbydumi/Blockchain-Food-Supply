@@ -14,11 +14,12 @@ from models.user import User, create_default_users
 from models.product import Product, create_sample_products
 from models.blockchain import load_blockchain, save_blockchain, get_blockchain_info
 
-# Import route blueprints (we'll create these next)
+# Import route blueprints
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from routes.products import products_bp
 from routes.analytics import analytics_bp
+from routes.blockchain import blockchain_bp  # NEW: Import blockchain routes
 
 
 def create_app(config_name='development'):
@@ -56,6 +57,7 @@ def create_app(config_name='development'):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(products_bp, url_prefix='/products')
     app.register_blueprint(analytics_bp, url_prefix='/analytics')
+    app.register_blueprint(blockchain_bp, url_prefix='/blockchain')  # NEW: Register blockchain routes
     
     # Main routes
     @app.route('/')
@@ -113,6 +115,7 @@ if __name__ == '__main__':
     """
     print("🚀 Starting Blockchain Food Supply Chain Application...")
     print("📊 Dashboard will be available at: http://localhost:5000")
+    print("🔗 Blockchain Explorer will be available at: http://localhost:5000/blockchain")  # NEW: Show blockchain URL
     print("👤 Default login credentials:")
     print("   Farmer: farmer_john / password123")
     print("   Distributor: distributor_abc / password123")

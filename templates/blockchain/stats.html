@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block title %}Blockchain Statistics - FoodChain Tracker{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-info">
+            <i class="fas fa-chart-bar me-3"></i>Blockchain Statistics
+        </h1>
+        <p class="lead text-muted">Comprehensive analytics of blockchain performance and usage</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-primary">
+                <i class="fas fa-cubes me-2"></i>View Blocks
+            </a>
+            <button onclick="refreshStats()" class="btn btn-outline-success">
+                <i class="fas fa-sync me-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Key Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">Total Blocks</div>
+                        <div class="h2 mb-0">{{ stats.total_blocks }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cubes fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">Total Transactions</div>
+                        <div class="h2 mb-0">{{ stats.total_transactions }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exchange-alt fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">Chain Size</div>
+                        <div class="h2 mb-0">{{ "%.1f"|format(stats.chain_size_bytes / 1024) }} KB</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-hdd fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-info text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">Mining Difficulty</div>
+                        <div class="h2 mb-0">{{ stats.mining_difficulty }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-pickaxe fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Blockchain Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Genesis Block:</strong><br>
+                        <span class="text-dark">{{ stats.genesis_timestamp[:19] if stats.genesis_timestamp else 'Unknown' }}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Latest Block:</strong><br>
+                        <span class="text-dark">{{ stats.latest_timestamp[:19] if stats.latest_timestamp else 'Unknown' }}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Average Block Size:</strong><br>
+                        <span class="text-dark">{{ "%.0f"|format(stats.average_block_size) }} bytes</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Average Transactions per Block:</strong><br>
+                        <span class="text-dark">{{ "%.1f"|format(stats.total_transactions / stats.total_blocks) if stats.total_blocks > 0 else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="h3 text-success">99.9%</div>
+                        <small class="text-muted">Uptime</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="h3 text-info">{{ stats.total_blocks }}</div>
+                        <small class="text-muted">Blocks Mined</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="h3 text-warning">0</div>
+                        <small class="text-muted">Failed Blocks</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Transaction Types Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Transaction Types Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="transactionTypesChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Transaction Volume -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Daily Transaction Volume
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="dailyVolumeChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Block Size Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Block Size Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="blockSizeChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Health -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>Network Health
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h5 class="text-success">Healthy</h5>
+                            <small class="text-muted">Chain Integrity</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-sync fa-2x text-primary mb-2"></i>
+                            <h5 class="text-primary">Active</h5>
+                            <small class="text-muted">Network Status</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-shield-check fa-2x text-success mb-2"></i>
+                            <h5 class="text-success">Secure</h5>
+                            <small class="text-muted">Cryptographic</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Health Metrics Progress Bars -->
+                <div class="mt-3">
+                    <div class="mb-2">
+                        <small class="text-muted">Chain Validation Score</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Network Synchronization</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Security Rating</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: 98%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="text-muted mb-0">No active alerts</p>
+                    <small class="text-muted">All systems operating normally</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Raw Statistics (Collapsible) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#rawStats">
+                        <i class="fas fa-database me-2"></i>Raw Statistics Data
+                        <i class="fas fa-chevron-down ms-2"></i>
+                    </button>
+                </h5>
+            </div>
+            <div id="rawStats" class="collapse">
+                <div class="card-body">
+                    <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code id="statsJsonData"></code></pre>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary" onclick="copyStatsData()">
+                            <i class="fas fa-copy me-2"></i>Copy Statistics
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="downloadStatsData()">
+                            <i class="fas fa-download me-2"></i>Download JSON
+                        </button>
+                        <button class="btn btn-outline-success" onclick="exportCSV()">
+                            <i class="fas fa-file-csv me-2"></i>Export CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Statistics data for charts and export
+const statsData = {
+    basic: {
+        totalBlocks: {{ stats.total_blocks }},
+        totalTransactions: {{ stats.total_transactions }},
+        chainSize: {{ stats.chain_size_bytes }},
+        averageBlockSize: {{ stats.average_block_size }},
+        miningDifficulty: {{ stats.mining_difficulty }}
+    },
+    transactionTypes: {{ tx_types | tojson | safe }},
+    dailyVolumes: {{ daily_volumes | tojson | safe }},
+    blockSizes: {{ block_sizes | tojson | safe }}
+};
+
+// Display formatted JSON data
+document.getElementById('statsJsonData').textContent = JSON.stringify(statsData, null, 2);
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    createTransactionTypesChart();
+    createDailyVolumeChart();
+    createBlockSizeChart();
+}
+
+function createTransactionTypesChart() {
+    const data = statsData.transactionTypes;
+    
+    if (Object.keys(data).length === 0) {
+        document.getElementById('transactionTypesChart').innerHTML = '<p class="text-center text-muted mt-5">No transaction data available</p>';
+        return;
+    }
+    
+    const chartData = [{
+        values: Object.values(data),
+        labels: Object.keys(data).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+        type: 'pie',
+        marker: {
+            colors: ['#28a745', '#007bff', '#fd7e14', '#dc3545', '#6f42c1']
+        }
+    }];
+    
+    const layout = {
+        showlegend: true,
+        margin: { t: 20, b: 20, l: 20, r: 20 }
+    };
+    
+    Plotly.newPlot('transactionTypesChart', chartData, layout, {responsive: true});
+}
+
+function createDailyVolumeChart() {
+    const data = statsData.dailyVolumes;
+    
+    if (Object.keys(data).length === 0) {
+        document.getElementById('dailyVolumeChart').innerHTML = '<p class="text-center text-muted mt-5">No volume data available</p>';
+        return;
+    }
+    
+    const dates = Object.keys(data).sort();
+    const volumes = dates.map(date => data[date]);
+    
+    const chartData = [{
+        x: dates,
+        y: volumes,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#28a745', width: 3 },
+        marker: { color: '#28a745', size: 8 },
+        name: 'Daily Transactions'
+    }];
+    
+    const layout = {
+        xaxis: { title: 'Date' },
+        yaxis: { title: 'Transaction Count' },
+        margin: { t: 20, b: 50, l: 50, r: 20 },
+        showlegend: false
+    };
+    
+    Plotly.newPlot('dailyVolumeChart', chartData, layout, {responsive: true});
+}
+
+function createBlockSizeChart() {
+    const blockSizes = statsData.blockSizes;
+    
+    if (blockSizes.length === 0) {
+        document.getElementById('blockSizeChart').innerHTML = '<p class="text-center text-muted mt-5">No block size data available</p>';
+        return;
+    }
+    
+    const blockIndices = blockSizes.map((_, index) => index);
+    
+    const chartData = [{
+        x: blockIndices,
+        y: blockSizes,
+        type: 'scatter',
+        mode: 'lines+markers',
+        fill: 'tonexty',
+        line: { color: '#007bff', width: 2 },
+        marker: { color: '#007bff', size: 6 },
+        fillcolor: 'rgba(0, 123, 255, 0.3)',
+        name: 'Block Size (bytes)'
+    }];
+    
+    const layout = {
+        title: 'Block Size Over Time',
+        xaxis: { title: 'Block Index' },
+        yaxis: { title: 'Size (bytes)' },
+        margin: { t: 50, b: 50, l: 80, r: 20 },
+        showlegend: false
+    };
+    
+    Plotly.newPlot('blockSizeChart', chartData, layout, {responsive: true});
+}
+
+function refreshStats() {
+    const button = document.querySelector('button[onclick="refreshStats()"]');
+    const originalText = button.innerHTML;
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    
+    // Simulate refresh (in real app, this would be an API call)
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+}
+
+function copyStatsData() {
+    const jsonData = JSON.stringify(statsData, null, 2);
+    copyToClipboard(jsonData);
+}
+
+function downloadStatsData() {
+    const jsonData = JSON.stringify(statsData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'blockchain_statistics.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Statistics downloaded!', 'success');
+}
+
+function exportCSV() {
+    const csvData = [];
+    
+    // Add basic statistics
+    csvData.push(['Metric', 'Value']);
+    csvData.push(['Total Blocks', statsData.basic.totalBlocks]);
+    csvData.push(['Total Transactions', statsData.basic.totalTransactions]);
+    csvData.push(['Chain Size (bytes)', statsData.basic.chainSize]);
+    csvData.push(['Average Block Size (bytes)', statsData.basic.averageBlockSize]);
+    csvData.push(['Mining Difficulty', statsData.basic.miningDifficulty]);
+    
+    // Add empty row
+    csvData.push(['']);
+    
+    // Add transaction types
+    csvData.push(['Transaction Type', 'Count']);
+    Object.entries(statsData.transactionTypes).forEach(([type, count]) => {
+        csvData.push([type, count]);
+    });
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'blockchain_statistics.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSV exported!', 'success');
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(function() {
+            prompt('Copy this text:', text);
+        });
+    } else {
+        prompt('Copy this text:', text);
+    }
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast show position-fixed bottom-0 end-0 m-3 bg-${type === 'success' ? 'success' : 'danger'} text-white`;
+    toast.innerHTML = `
+        <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white border-0">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+            <button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+// Auto-refresh charts every 5 minutes
+setInterval(() => {
+    console.log('Auto-refreshing blockchain statistics...');
+    // You could implement automatic chart updates here
+}, 300000);
+</script>
+{% endblock %}

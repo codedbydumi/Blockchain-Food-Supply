@@ -58,11 +58,12 @@
                                 <i class="fas fa-chart-line me-1"></i>Analytics
                             </a>
                         </li>
-
-                        <!-- Add this to the navbar-nav section -->
-                      
-
-                        
+                        <!-- NEW: Blockchain Explorer Link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('blockchain.explorer') }}">
+                                <i class="fas fa-cubes me-1"></i>Blockchain
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
                 
@@ -154,7 +155,7 @@
                     <p class="mb-0">
                         <i class="fas fa-shield-alt me-1"></i>Secured by Blockchain Technology
                     </p>
-                    <small class="text-muted">© 2025 FoodChain Tracker <a href="https://github.com/codedbydumi">{Codedbydumi}.</a> All rights reserved.</small>
+                    <small class="text-muted">© 2025 FoodChain Tracker <a href="https://github.com/codedbydumi">{Codedbydumi}</a>. All rights reserved.</small>
                 </div>
             </div>
         </div>
