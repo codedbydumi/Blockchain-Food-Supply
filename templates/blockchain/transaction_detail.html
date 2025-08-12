@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction #{{ transaction_data.transaction.transaction_id }} - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-success">
+            <i class="fas fa-exchange-alt me-3"></i>Transaction Details
+        </h1>
+        <p class="lead">
+            Transaction #<code>{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('blockchain.view_block', index=transaction_data.block_index) }}" class="btn btn-outline-primary">
+                <i class="fas fa-cube me-2"></i>View Block
+            </a>
+            <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>All Blocks
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Overview -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Transaction Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Transaction ID:</strong><br>
+                        <code class="bg-light p-2 rounded d-block">{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Type:</strong><br>
+                        {% set tx_type = transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' %}
+                        <span class="badge bg-{{ 'success' if tx_type == 'create' else 'primary' if tx_type == 'transfer' else 'info' }} fs-6">
+                            <i class="fas fa-{{ 'plus' if tx_type == 'create' else 'exchange-alt' if tx_type == 'transfer' else 'question' }} me-2"></i>
+                            {{ tx_type.title() }}
+                        </span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Block Index:</strong><br>
+                        <a href="{{ url_for('blockchain.view_block', index=transaction_data.block_index) }}" class="text-decoration-none">
+                            <span class="badge bg-primary fs-6">{{ transaction_data.block_index }}</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong class="text-muted">Block Hash:</strong><br>
+                        <code class="small">{{ transaction_data.block.hash[:20] }}...</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transaction Status -->
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-check me-2"></i>Status
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h4 class="text-success">CONFIRMED</h4>
+                <p class="text-muted mb-0">Transaction is permanently recorded on the blockchain</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Information -->
+{% if product %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-box me-2"></i>Product Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-light rounded p-3">
+                            <i class="fas fa-leaf fa-3x text-success mb-2"></i>
+                            <h6 class="text-muted">Product</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong class="text-muted">Product Name:</strong><br>
+                                <a href="{{ url_for('products.view_product', id=product.id) }}" class="text-decoration-none">
+                                    <strong class="text-dark">{{ product.name }}</strong>
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong class="text-muted">Batch ID:</strong><br>
+                                <code class="bg-light p-1 rounded">{{ product.batch_id }}</code>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong class="text-muted">Category:</strong><br>
+                                <span class="badge bg-secondary">{{ product.category.title() }}</span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong class="text-muted">Quantity:</strong><br>
+                                <span class="text-dark">{{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else product.quantity }} {{ product.unit }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Transfer Information -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Transfer Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <!-- From User -->
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            {% if from_user %}
+                                <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
+                                <h6 class="text-primary">FROM</h6>
+                                <strong>{{ from_user.full_name }}</strong>
+                                <br><small class="text-muted">{{ from_user.company_name or from_user.get_role_display() }}</small>
+                                <br><span class="badge bg-light text-dark">{{ from_user.get_role_display() }}</span>
+                            {% else %}
+                                <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">FROM</h6>
+                                <strong class="text-muted">System</strong>
+                                <br><small class="text-muted">Automated Process</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Transfer Arrow -->
+                    <div class="col-md-4 mb-3 d-flex align-items-center justify-content-center">
+                        <div class="text-center">
+                            <i class="fas fa-arrow-right fa-3x text-success mb-2"></i>
+                            <br><strong class="text-success">TRANSFER</strong>
+                            {% if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity %}
+                                <br><small class="text-muted">{{ transaction_data.transaction.quantity }} units</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- To User -->
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            {% if to_user %}
+                                <i class="fas fa-user-check fa-3x text-success mb-3"></i>
+                                <h6 class="text-success">TO</h6>
+                                <strong>{{ to_user.full_name }}</strong>
+                                <br><small class="text-muted">{{ to_user.company_name or to_user.get_role_display() }}</small>
+                                <br><span class="badge bg-light text-dark">{{ to_user.get_role_display() }}</span>
+                            {% else %}
+                                <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">TO</h6>
+                                <strong class="text-muted">System</strong>
+                                <br><small class="text-muted">Automated Process</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location & Environmental Data -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>Location Data
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location %}
+                    <div class="mb-3">
+                        <strong class="text-muted">Location:</strong><br>
+                        <i class="fas fa-map-marker-alt text-info me-2"></i>
+                        {{ transaction_data.transaction.location }}
+                    </div>
+                {% endif %}
+                
+                {% if hasattr(transaction_data.transaction, 'latitude') and hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.latitude and transaction_data.transaction.longitude %}
+                    <div class="mb-3">
+                        <strong class="text-muted">Coordinates:</strong><br>
+                        <i class="fas fa-globe me-2"></i>
+                        <code>{{ "%.6f"|format(transaction_data.transaction.latitude) }}, {{ "%.6f"|format(transaction_data.transaction.longitude) }}</code>
+                    </div>
+                {% endif %}
+                
+                {% if not ((hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location) or (hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude)) %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-map fa-3x mb-3"></i>
+                        <p class="mb-0">No location data recorded</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-thermometer-half me-2"></i>Environmental Data
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-thermometer-half fa-2x text-danger me-3"></i>
+                            <div>
+                                <strong class="text-muted">Temperature:</strong><br>
+                                <span class="h4 text-danger">{{ transaction_data.transaction.temperature }}°C</span>
+                                {% if transaction_data.transaction.temperature < 0 or transaction_data.transaction.temperature > 25 %}
+                                    <br><small class="badge bg-warning">Outside Safe Range</small>
+                                {% else %}
+                                    <br><small class="badge bg-success">Safe Range</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-tint fa-2x text-info me-3"></i>
+                            <div>
+                                <strong class="text-muted">Humidity:</strong><br>
+                                <span class="h4 text-info">{{ transaction_data.transaction.humidity }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if not ((hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none) or (hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none)) %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-thermometer-empty fa-3x mb-3"></i>
+                        <p class="mb-0">No environmental data recorded</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Transaction Details -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>Additional Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if hasattr(transaction_data.transaction, 'vehicle_id') and transaction_data.transaction.vehicle_id %}
+                        <div class="col-md-3 mb-3">
+                            <strong class="text-muted">Vehicle ID:</strong><br>
+                            <span class="badge bg-light text-dark">{{ transaction_data.transaction.vehicle_id }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if hasattr(transaction_data.transaction, 'transport_method') and transaction_data.transaction.transport_method %}
+                        <div class="col-md-3 mb-3">
+                            <strong class="text-muted">Transport Method:</strong><br>
+                            <i class="fas fa-{{ 'truck' if transaction_data.transaction.transport_method == 'truck' else 'ship' if transaction_data.transaction.transport_method == 'ship' else 'plane' if transaction_data.transaction.transport_method == 'plane' else 'train' if transaction_data.transaction.transport_method == 'train' else 'shipping-fast' }} me-2"></i>
+                            {{ transaction_data.transaction.transport_method.title() }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="col-md-3 mb-3">
+                        <strong class="text-muted">Timestamp:</strong><br>
+                        <i class="fas fa-clock me-2"></i>
+                        {{ transaction_data.block.timestamp[:19] if transaction_data.block.timestamp else 'Unknown' }}
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <strong class="text-muted">Block Confirmations:</strong><br>
+                        <span class="badge bg-success">Confirmed</span>
+                    </div>
+                </div>
+                
+                {% if hasattr(transaction_data.transaction, 'notes') and transaction_data.transaction.notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <strong class="text-muted">Notes:</strong><br>
+                            <div class="bg-light p-3 rounded">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                {{ transaction_data.transaction.notes }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Raw Data (Collapsible) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#rawTransactionData">
+                        <i class="fas fa-code me-2"></i>Raw Transaction Data
+                        <i class="fas fa-chevron-down ms-2"></i>
+                    </button>
+                </h5>
+            </div>
+            <div id="rawTransactionData" class="collapse">
+                <div class="card-body">
+                    <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code id="transactionJsonData"></code></pre>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary" onclick="copyTransactionData()">
+                            <i class="fas fa-copy me-2"></i>Copy Transaction Data
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="downloadTransactionData()">
+                            <i class="fas fa-download me-2"></i>Download JSON
+                        </button>
+                        <button class="btn btn-outline-success" onclick="verifyTransaction()">
+                            <i class="fas fa-shield-check me-2"></i>Verify Transaction
+                        </button>
+                    </div>
+                    <div id="verificationResult" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Transaction data for raw display and verification
+const transactionData = {
+    transaction_id: "{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}",
+    transaction_type: "{{ transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' }}",
+    product_id: {{ transaction_data.transaction.product_id if hasattr(transaction_data.transaction, 'product_id') and transaction_data.transaction.product_id else 'null' }},
+    from_user_id: {{ transaction_data.transaction.from_user_id if hasattr(transaction_data.transaction, 'from_user_id') and transaction_data.transaction.from_user_id else 'null' }},
+    to_user_id: {{ transaction_data.transaction.to_user_id if hasattr(transaction_data.transaction, 'to_user_id') and transaction_data.transaction.to_user_id else 'null' }},
+    quantity: {{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else 'null' }},
+    location: "{{ transaction_data.transaction.location if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location else '' }}",
+    latitude: {{ transaction_data.transaction.latitude if hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude else 'null' }},
+    longitude: {{ transaction_data.transaction.longitude if hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.longitude else 'null' }},
+    temperature: {{ transaction_data.transaction.temperature if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none else 'null' }},
+    humidity: {{ transaction_data.transaction.humidity if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none else 'null' }},
+    vehicle_id: "{{ transaction_data.transaction.vehicle_id if hasattr(transaction_data.transaction, 'vehicle_id') and transaction_data.transaction.vehicle_id else '' }}",
+    transport_method: "{{ transaction_data.transaction.transport_method if hasattr(transaction_data.transaction, 'transport_method') and transaction_data.transaction.transport_method else '' }}",
+    notes: "{{ transaction_data.transaction.notes if hasattr(transaction_data.transaction, 'notes') and transaction_data.transaction.notes else '' }}",
+    block_index: {{ transaction_data.block_index }},
+    block_hash: "{{ transaction_data.block.hash }}",
+    timestamp: "{{ transaction_data.block.timestamp }}"
+};
+
+const blockData = {
+    index: {{ transaction_data.block_index }},
+    hash: "{{ transaction_data.block.hash }}",
+    previous_hash: "{{ transaction_data.block.previous_hash }}",
+    timestamp: "{{ transaction_data.block.timestamp }}"
+};
+
+// Display formatted JSON data
+document.getElementById('transactionJsonData').textContent = JSON.stringify({
+    transaction: transactionData,
+    block: blockData
+}, null, 2);
+
+function copyTransactionData() {
+    const jsonData = JSON.stringify(transactionData, null, 2);
+    copyToClipboard(jsonData);
+}
+
+function downloadTransactionData() {
+    const jsonData = JSON.stringify({
+        transaction: transactionData,
+        block: blockData
+    }, null, 2);
+    
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transaction_${transactionData.transaction_id}_data.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Transaction data downloaded!', 'success');
+}
+
+function verifyTransaction() {
+    const resultDiv = document.getElementById('verificationResult');
+    resultDiv.style.display = 'block';
+    
+    // Simple verification checks
+    const checks = {
+        'Transaction ID exists': transactionData.transaction_id && transactionData.transaction_id !== 'N/A',
+        'Block hash exists': blockData.hash && blockData.hash.length === 64,
+        'Timestamp valid': blockData.timestamp && new Date(blockData.timestamp).getTime() > 0,
+        'Transaction type valid': ['create', 'transfer'].includes(transactionData.transaction_type),
+        'Product ID valid': transactionData.product_id !== null,
+        'Block index valid': blockData.index >= 0
+    };
+    
+    let html = '<div class="alert alert-info"><h6><i class="fas fa-shield-check me-2"></i>Transaction Verification Results:</h6><ul class="mb-0">';
+    
+    Object.entries(checks).forEach(([check, passed]) => {
+        const icon = passed ? 'fa-check text-success' : 'fa-times text-danger';
+        const status = passed ? 'PASS' : 'FAIL';
+        html += `<li><i class="fas ${icon} me-2"></i>${check}: <strong>${status}</strong></li>`;
+    });
+    
+    html += '</ul></div>';
+    
+    const allPassed = Object.values(checks).every(check => check);
+    if (allPassed) {
+        html += '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><strong>Transaction is valid and verified!</strong></div>';
+    } else {
+        html += '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i><strong>Some verification checks failed. This may indicate data corruption.</strong></div>';
+    }
+    
+    resultDiv.innerHTML = html;
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(function() {
+            prompt('Copy this text:', text);
+        });
+    } else {
+        prompt('Copy this text:', text);
+    }
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast show position-fixed bottom-0 end-0 m-3 bg-${type === 'success' ? 'success' : 'danger'} text-white`;
+    toast.innerHTML = `
+        <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white border-0">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+            <button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Blockchain Verification - FoodChain Tracker{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function runVerification() {
+    const button = document.querySelector('button[onclick="runVerification()"]');
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+    
+    // Simulate verification process (in a real app, this would be an API call)
+    setTimeout(() => {
+        // Reload the page to show fresh verification results
+        window.location.reload();
+    }, 2000);
+}
+
+// Auto-refresh verification every 5 minutes
+setInterval(() => {
+    console.log('Auto-refreshing blockchain verification...');
+    // You could implement automatic verification updates here
+}, 300000);
+
+// Add tooltips for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips if available
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    if (window.bootstrap && window.bootstrap.Tooltip) {
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-{{ 'success' if is_valid else 'danger' }}">
+            <i class="fas fa-shield-{{ 'check' if is_valid else 'times' }} me-3"></i>Blockchain Verification
+        </h1>
+        <p class="lead text-muted">Complete integrity check of the blockchain</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-primary">
+                <i class="fas fa-cubes me-2"></i>View Blocks
+            </a>
+            <button onclick="runVerification()" class="btn btn-outline-success">
+                <i class="fas fa-sync me-2"></i>Re-verify
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-{{ 'success' if is_valid else 'danger' }} border-0 shadow">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    <i class="fas fa-shield-{{ 'check' if is_valid else 'times' }} fa-4x"></i>
+                </div>
+                <div class="col-md-10">
+                    <h4 class="alert-heading mb-2">
+                        Blockchain is {{ 'VALID' if is_valid else 'INVALID' }}
+                    </h4>
+                    <p class="mb-0">
+                        {% if is_valid %}
+                            All blocks have been verified and the blockchain integrity is intact. 
+                            All transactions are secure and tamper-proof.
+                        {% else %}
+                            Blockchain integrity check failed. Some blocks may have been tampered with 
+                            or corrupted. Immediate investigation required.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Summary -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="fas fa-cube fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ verification_results|length + 1 }}</h4>
+                <p class="card-text text-muted mb-0">Total Blocks</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ verification_results | selectattr('is_valid') | list | length + 1 }}</h4>
+                <p class="card-text text-muted mb-0">Valid Blocks</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-danger">
+            <div class="card-body">
+                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                <h4 class="text-danger">{{ verification_results | rejectattr('is_valid') | list | length }}</h4>
+                <p class="card-text text-muted mb-0">Invalid Blocks</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                <h4 class="text-info">{{ "%.1f"|format(((verification_results | selectattr('is_valid') | list | length + 1) / (verification_results|length + 1) * 100) if verification_results else 100) }}%</h4>
+                <p class="card-text text-muted mb-0">Integrity Score</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Verification Results -->
+{% if verification_results %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-check me-2"></i>Detailed Verification Results
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 100px;">Block #</th>
+                                <th style="width: 120px;">Overall Status</th>
+                                <th style="width: 140px;">Hash Validation</th>
+                                <th style="width: 140px;">Chain Linkage</th>
+                                <th style="width: 200px;">Block Hash</th>
+                                <th>Timestamp</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Genesis Block (Always Valid) -->
+                            <tr class="table-success">
+                                <td>
+                                    <span class="badge bg-primary">0</span>
+                                    <small class="d-block text-muted">Genesis</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>VALID
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Valid
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-minus me-1"></i>N/A
+                                    </span>
+                                </td>
+                                <td>
+                                    <code class="small">Genesis Block</code>
+                                </td>
+                                <td>
+                                    <small>Genesis</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" disabled>
+                                        <i class="fas fa-crown"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Regular Blocks -->
+                            {% for result in verification_results %}
+                                <tr class="table-{{ 'success' if result.is_valid else 'danger' }}">
+                                    <td>
+                                        <span class="badge bg-primary">{{ result.index }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if result.is_valid else 'danger' }}">
+                                            <i class="fas fa-{{ 'check' if result.is_valid else 'times' }} me-1"></i>
+                                            {{ 'VALID' if result.is_valid else 'INVALID' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if result.block_hash_valid else 'danger' }}">
+                                            <i class="fas fa-{{ 'check' if result.block_hash_valid else 'times' }} me-1"></i>
+                                            {{ 'Valid' if result.block_hash_valid else 'Invalid' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if result.prev_hash_valid else 'danger' }}">
+                                            <i class="fas fa-{{ 'check' if result.prev_hash_valid else 'times' }} me-1"></i>
+                                            {{ 'Valid' if result.prev_hash_valid else 'Broken' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <code class="small" title="{{ result.block.hash }}">
+                                            {{ result.block.hash[:20] }}...
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <small>{{ result.block.timestamp[:19] if result.block.timestamp else 'Unknown' }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('blockchain.view_block', index=result.index) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Block">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Details (if any) -->
+{% set invalid_blocks = verification_results | rejectattr('is_valid') | list %}
+{% if invalid_blocks %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Security Alert: Invalid Blocks Detected
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-shield-times me-2"></i>Blockchain Integrity Compromised
+                    </h6>
+                    <p class="mb-3">
+                        {{ invalid_blocks|length }} block(s) failed verification. This could indicate:
+                    </p>
+                    <ul class="mb-3">
+                        <li>Tampering or unauthorized modification</li>
+                        <li>Data corruption during storage or transmission</li>
+                        <li>System errors during block creation</li>
+                        <li>Hash collision (extremely unlikely)</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Recommended Actions:</strong>
+                        Investigate immediately, backup current state, and consider rolling back to the last valid block.
+                    </p>
+                </div>
+                
+                <h6 class="text-danger mb-3">Invalid Blocks:</h6>
+                {% for block in invalid_blocks %}
+                    <div class="card border-danger mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <strong class="text-danger">Block #{{ block.index }}</strong>
+                                </div>
+                                <div class="col-md-5">
+                                    <small class="text-muted">Issues:</small><br>
+                                    {% if not block.block_hash_valid %}
+                                        <span class="badge bg-danger me-1">Hash Invalid</span>
+                                    {% endif %}
+                                    {% if not block.prev_hash_valid %}
+                                        <span class="badge bg-danger me-1">Chain Broken</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-5 text-end">
+                                    <a href="{{ url_for('blockchain.view_block', index=block.index) }}" 
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-search me-1"></i>Investigate
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty Blockchain -->
+<div class="row">
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-cube fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">Empty Blockchain</h3>
+            <p class="lead text-muted mb-4">
+                The blockchain contains only the genesis block. Create some products to see verification results.
+            </p>
+            {% if current_user.can_create_products() %}
+                <a href="{{ url_for('products.add_product') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Create Your First Product
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Technical Details (Collapsible) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#technicalDetails">
+                        <i class="fas fa-cog me-2"></i>Technical Verification Details
+                        <i class="fas fa-chevron-down ms-2"></i>
+                    </button>
+                </h5>
+            </div>
+            <div id="technicalDetails" class="collapse">
+                <div class="card-body">
+                    <h6 class="text-info mb-3">Verification Process:</h6>
+                    <ol>
+                        <li><strong>Hash Validation:</strong> Each block's hash is recalculated and compared with stored hash</li>
+                        <li><strong>Chain Linkage:</strong> Previous hash in each block is verified against the actual hash of the previous block</li>
+                        <li><strong>Timestamp Validation:</strong> Block timestamps are checked for logical sequence</li>
+                        <li><strong>Transaction Integrity:</strong> All transactions within blocks are validated</li>
+                    </ol>
+                    
+                    <h6 class="text-info mb-3 mt-4">Cryptographic Details:</h6>
+                    <ul>
+                        <li><strong>Hash Algorithm:</strong> SHA-256</li>
+                        <li><strong>Block Hash Format:</strong> 64-character hexadecimal string</li>
+                        <li><strong>Mining Difficulty:</strong> Variable based on network conditions</li>
+                        <li><strong>Consensus Mechanism:</strong> Proof of Work (simplified)</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This verification process ensures that all data in the blockchain is authentic and has not been tampered with.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
