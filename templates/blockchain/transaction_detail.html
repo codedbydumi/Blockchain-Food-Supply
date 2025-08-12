@@ -37,7 +37,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <strong class="text-muted">Transaction ID:</strong><br>
-                        <code class="bg-light p-2 rounded d-block">{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
+                        <code class="bg-light p-2 rounded d-block text-break">{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
                     </div>
                     <div class="col-md-6 mb-3">
                         <strong class="text-muted">Type:</strong><br>
@@ -55,7 +55,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <strong class="text-muted">Block Hash:</strong><br>
-                        <code class="small">{{ transaction_data.block.hash[:20] }}...</code>
+                        <code class="small text-break">{{ transaction_data.block.hash[:20] }}...</code>
                     </div>
                 </div>
             </div>
@@ -326,148 +326,34 @@
         </div>
     </div>
 </div>
-
-<!-- Transaction Raw Data (Collapsible) -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">
-                    <button class="btn btn-link text-white text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#rawTransactionData">
-                        <i class="fas fa-code me-2"></i>Raw Transaction Data
-                        <i class="fas fa-chevron-down ms-2"></i>
-                    </button>
-                </h5>
-            </div>
-            <div id="rawTransactionData" class="collapse">
-                <div class="card-body">
-                    <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code id="transactionJsonData"></code></pre>
-                    <div class="mt-3">
-                        <button class="btn btn-outline-primary" onclick="copyTransactionData()">
-                            <i class="fas fa-copy me-2"></i>Copy Transaction Data
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="downloadTransactionData()">
-                            <i class="fas fa-download me-2"></i>Download JSON
-                        </button>
-                        <button class="btn btn-outline-success" onclick="verifyTransaction()">
-                            <i class="fas fa-shield-check me-2"></i>Verify Transaction
-                        </button>
-                    </div>
-                    <div id="verificationResult" class="mt-3" style="display: none;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
+
+<!-- Hidden data for JavaScript -->
+<script id="transaction-data" type="application/json">
+{
+    "transaction_id": "{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}",
+    "transaction_type": "{{ transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' }}",
+    "product_id": {{ transaction_data.transaction.product_id if hasattr(transaction_data.transaction, 'product_id') and transaction_data.transaction.product_id else 'null' }},
+    "from_user_id": {{ transaction_data.transaction.from_user_id if hasattr(transaction_data.transaction, 'from_user_id') and transaction_data.transaction.from_user_id else 'null' }},
+    "to_user_id": {{ transaction_data.transaction.to_user_id if hasattr(transaction_data.transaction, 'to_user_id') and transaction_data.transaction.to_user_id else 'null' }},
+    "quantity": {{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else 'null' }},
+    "location": "{{ transaction_data.transaction.location if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location else '' }}",
+    "latitude": {{ transaction_data.transaction.latitude if hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude else 'null' }},
+    "longitude": {{ transaction_data.transaction.longitude if hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.longitude else 'null' }},
+    "temperature": {{ transaction_data.transaction.temperature if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none else 'null' }},
+    "humidity": {{ transaction_data.transaction.humidity if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none else 'null' }},
+    "block_index": {{ transaction_data.block_index }},
+    "block_hash": "{{ transaction_data.block.hash }}",
+    "timestamp": "{{ transaction_data.block.timestamp }}"
+}
+</script>
 
 {% block extra_scripts %}
 <script>
-// Transaction data for raw display and verification
-var transactionData = {
-    transaction_id: "{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}",
-    transaction_type: "{{ transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' }}",
-    product_id: {{ transaction_data.transaction.product_id if hasattr(transaction_data.transaction, 'product_id') and transaction_data.transaction.product_id else 'null' }},
-    from_user_id: {{ transaction_data.transaction.from_user_id if hasattr(transaction_data.transaction, 'from_user_id') and transaction_data.transaction.from_user_id else 'null' }},
-    to_user_id: {{ transaction_data.transaction.to_user_id if hasattr(transaction_data.transaction, 'to_user_id') and transaction_data.transaction.to_user_id else 'null' }},
-    quantity: {{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else 'null' }},
-    location: "{{ transaction_data.transaction.location if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location else '' }}",
-    latitude: {{ transaction_data.transaction.latitude if hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude else 'null' }},
-    longitude: {{ transaction_data.transaction.longitude if hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.longitude else 'null' }},
-    temperature: {{ transaction_data.transaction.temperature if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none else 'null' }},
-    humidity: {{ transaction_data.transaction.humidity if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none else 'null' }},
-    vehicle_id: "{{ transaction_data.transaction.vehicle_id if hasattr(transaction_data.transaction, 'vehicle_id') and transaction_data.transaction.vehicle_id else '' }}",
-    transport_method: "{{ transaction_data.transaction.transport_method if hasattr(transaction_data.transaction, 'transport_method') and transaction_data.transaction.transport_method else '' }}",
-    notes: "{{ transaction_data.transaction.notes if hasattr(transaction_data.transaction, 'notes') and transaction_data.transaction.notes else '' }}",
-    block_index: {{ transaction_data.block_index }},
-    block_hash: "{{ transaction_data.block.hash }}",
-    timestamp: "{{ transaction_data.block.timestamp }}"
-};
+// Get transaction data from JSON script tag
+var transactionData = JSON.parse(document.getElementById('transaction-data').textContent);
 
-var blockData = {
-    index: {{ transaction_data.block_index }},
-    hash: "{{ transaction_data.block.hash }}",
-    previous_hash: "{{ transaction_data.block.previous_hash }}",
-    timestamp: "{{ transaction_data.block.timestamp }}"
-};
-
-// Display formatted JSON data
-document.getElementById('transactionJsonData').textContent = JSON.stringify({
-    transaction: transactionData,
-    block: blockData
-}, null, 2);
-
-function copyTransactionData() {
-    var jsonData = JSON.stringify(transactionData, null, 2);
-    copyToClipboard(jsonData);
-}
-
-function downloadTransactionData() {
-    var jsonData = JSON.stringify({
-        transaction: transactionData,
-        block: blockData
-    }, null, 2);
-    
-    var blob = new Blob([jsonData], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'transaction_' + transactionData.transaction_id + '_data.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('Transaction data downloaded!', 'success');
-}
-
-function verifyTransaction() {
-    var resultDiv = document.getElementById('verificationResult');
-    resultDiv.style.display = 'block';
-    
-    // Simple verification checks
-    var checks = {
-        'Transaction ID exists': transactionData.transaction_id && transactionData.transaction_id !== 'N/A',
-        'Block hash exists': blockData.hash && blockData.hash.length === 64,
-        'Timestamp valid': blockData.timestamp && new Date(blockData.timestamp).getTime() > 0,
-        'Transaction type valid': ['create', 'transfer'].includes(transactionData.transaction_type),
-        'Product ID valid': transactionData.product_id !== null,
-        'Block index valid': blockData.index >= 0
-    };
-    
-    var html = '<div class="alert alert-info"><h6><i class="fas fa-shield-check me-2"></i>Transaction Verification Results:</h6><ul class="mb-0">';
-    
-    Object.entries(checks).forEach(function(entry) {
-        var check = entry[0];
-        var passed = entry[1];
-        var icon = passed ? 'fa-check text-success' : 'fa-times text-danger';
-        var status = passed ? 'PASS' : 'FAIL';
-        html += '<li><i class="fas ' + icon + ' me-2"></i>' + check + ': <strong>' + status + '</strong></li>';
-    });
-    
-    html += '</ul></div>';
-    
-    var allPassed = Object.values(checks).every(function(check) { return check; });
-    if (allPassed) {
-        html += '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><strong>Transaction is valid and verified!</strong></div>';
-    } else {
-        html += '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i><strong>Some verification checks failed. This may indicate data corruption.</strong></div>';
-    }
-    
-    resultDiv.innerHTML = html;
-}
-
-function copyToClipboard(text) {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-            showToast('Copied to clipboard!', 'success');
-        }).catch(function() {
-            prompt('Copy this text:', text);
-        });
-    } else {
-        prompt('Copy this text:', text);
-    }
-}
-
+// Simple functions without complex template interactions
 function showToast(message, type) {
     var toast = document.createElement('div');
     toast.className = 'toast show position-fixed bottom-0 end-0 m-3 bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white';
@@ -484,5 +370,7 @@ function showToast(message, type) {
         }
     }, 3000);
 }
+
+console.log('Transaction data loaded:', transactionData);
 </script>
 {% endblock %}
