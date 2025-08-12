@@ -275,58 +275,28 @@
         </div>
     </div>
 </div>
-
-<!-- Raw Statistics (Collapsible) -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">
-                    <button class="btn btn-link text-white text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#rawStats">
-                        <i class="fas fa-database me-2"></i>Raw Statistics Data
-                        <i class="fas fa-chevron-down ms-2"></i>
-                    </button>
-                </h5>
-            </div>
-            <div id="rawStats" class="collapse">
-                <div class="card-body">
-                    <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code id="statsJsonData"></code></pre>
-                    <div class="mt-3">
-                        <button class="btn btn-outline-primary" onclick="copyStatsData()">
-                            <i class="fas fa-copy me-2"></i>Copy Statistics
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="downloadStatsData()">
-                            <i class="fas fa-download me-2"></i>Download JSON
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportCSV()">
-                            <i class="fas fa-file-csv me-2"></i>Export CSV
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-// Statistics data for charts and export
-const statsData = {
-    basic: {
-        totalBlocks: {{ stats.total_blocks }},
-        totalTransactions: {{ stats.total_transactions }},
-        chainSize: {{ stats.chain_size_bytes }},
-        averageBlockSize: {{ stats.average_block_size }},
-        miningDifficulty: {{ stats.mining_difficulty }}
+<!-- Hidden data for JavaScript -->
+<script id="stats-data" type="application/json">
+{
+    "basic": {
+        "totalBlocks": {{ stats.total_blocks }},
+        "totalTransactions": {{ stats.total_transactions }},
+        "chainSize": {{ stats.chain_size_bytes }},
+        "averageBlockSize": {{ stats.average_block_size }},
+        "miningDifficulty": {{ stats.mining_difficulty }}
     },
-    transactionTypes: {{ tx_types | tojson | safe }},
-    dailyVolumes: {{ daily_volumes | tojson | safe }},
-    blockSizes: {{ block_sizes | tojson | safe }}
-};
+    "transactionTypes": {{ tx_types | tojson | safe }},
+    "dailyVolumes": {{ daily_volumes | tojson | safe }},
+    "blockSizes": {{ block_sizes | tojson | safe }}
+}
+</script>
 
-// Display formatted JSON data
-document.getElementById('statsJsonData').textContent = JSON.stringify(statsData, null, 2);
+<script>
+// Get statistics data from JSON script tag
+var statsData = JSON.parse(document.getElementById('stats-data').textContent);
 
 // Initialize charts when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -340,23 +310,23 @@ function initializeCharts() {
 }
 
 function createTransactionTypesChart() {
-    const data = statsData.transactionTypes;
+    var data = statsData.transactionTypes;
     
     if (Object.keys(data).length === 0) {
         document.getElementById('transactionTypesChart').innerHTML = '<p class="text-center text-muted mt-5">No transaction data available</p>';
         return;
     }
     
-    const chartData = [{
+    var chartData = [{
         values: Object.values(data),
-        labels: Object.keys(data).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+        labels: Object.keys(data).map(function(key) { return key.charAt(0).toUpperCase() + key.slice(1); }),
         type: 'pie',
         marker: {
             colors: ['#28a745', '#007bff', '#fd7e14', '#dc3545', '#6f42c1']
         }
     }];
     
-    const layout = {
+    var layout = {
         showlegend: true,
         margin: { t: 20, b: 20, l: 20, r: 20 }
     };
@@ -365,17 +335,17 @@ function createTransactionTypesChart() {
 }
 
 function createDailyVolumeChart() {
-    const data = statsData.dailyVolumes;
+    var data = statsData.dailyVolumes;
     
     if (Object.keys(data).length === 0) {
         document.getElementById('dailyVolumeChart').innerHTML = '<p class="text-center text-muted mt-5">No volume data available</p>';
         return;
     }
     
-    const dates = Object.keys(data).sort();
-    const volumes = dates.map(date => data[date]);
+    var dates = Object.keys(data).sort();
+    var volumes = dates.map(function(date) { return data[date]; });
     
-    const chartData = [{
+    var chartData = [{
         x: dates,
         y: volumes,
         type: 'scatter',
@@ -385,7 +355,7 @@ function createDailyVolumeChart() {
         name: 'Daily Transactions'
     }];
     
-    const layout = {
+    var layout = {
         xaxis: { title: 'Date' },
         yaxis: { title: 'Transaction Count' },
         margin: { t: 20, b: 50, l: 50, r: 20 },
@@ -396,16 +366,16 @@ function createDailyVolumeChart() {
 }
 
 function createBlockSizeChart() {
-    const blockSizes = statsData.blockSizes;
+    var blockSizes = statsData.blockSizes;
     
     if (blockSizes.length === 0) {
         document.getElementById('blockSizeChart').innerHTML = '<p class="text-center text-muted mt-5">No block size data available</p>';
         return;
     }
     
-    const blockIndices = blockSizes.map((_, index) => index);
+    var blockIndices = blockSizes.map(function(_, index) { return index; });
     
-    const chartData = [{
+    var chartData = [{
         x: blockIndices,
         y: blockSizes,
         type: 'scatter',
@@ -417,7 +387,7 @@ function createBlockSizeChart() {
         name: 'Block Size (bytes)'
     }];
     
-    const layout = {
+    var layout = {
         title: 'Block Size Over Time',
         xaxis: { title: 'Block Index' },
         yaxis: { title: 'Size (bytes)' },
@@ -429,108 +399,33 @@ function createBlockSizeChart() {
 }
 
 function refreshStats() {
-    const button = document.querySelector('button[onclick="refreshStats()"]');
-    const originalText = button.innerHTML;
+    var button = document.querySelector('button[onclick="refreshStats()"]');
+    var originalText = button.innerHTML;
     
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
     
     // Simulate refresh (in real app, this would be an API call)
-    setTimeout(() => {
+    setTimeout(function() {
         window.location.reload();
     }, 1500);
 }
 
-function copyStatsData() {
-    const jsonData = JSON.stringify(statsData, null, 2);
-    copyToClipboard(jsonData);
-}
-
-function downloadStatsData() {
-    const jsonData = JSON.stringify(statsData, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'blockchain_statistics.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('Statistics downloaded!', 'success');
-}
-
-function exportCSV() {
-    const csvData = [];
-    
-    // Add basic statistics
-    csvData.push(['Metric', 'Value']);
-    csvData.push(['Total Blocks', statsData.basic.totalBlocks]);
-    csvData.push(['Total Transactions', statsData.basic.totalTransactions]);
-    csvData.push(['Chain Size (bytes)', statsData.basic.chainSize]);
-    csvData.push(['Average Block Size (bytes)', statsData.basic.averageBlockSize]);
-    csvData.push(['Mining Difficulty', statsData.basic.miningDifficulty]);
-    
-    // Add empty row
-    csvData.push(['']);
-    
-    // Add transaction types
-    csvData.push(['Transaction Type', 'Count']);
-    Object.entries(statsData.transactionTypes).forEach(([type, count]) => {
-        csvData.push([type, count]);
-    });
-    
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'blockchain_statistics.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('CSV exported!', 'success');
-}
-
-function copyToClipboard(text) {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-            showToast('Copied to clipboard!', 'success');
-        }).catch(function() {
-            prompt('Copy this text:', text);
-        });
-    } else {
-        prompt('Copy this text:', text);
-    }
-}
-
 function showToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `toast show position-fixed bottom-0 end-0 m-3 bg-${type === 'success' ? 'success' : 'danger'} text-white`;
-    toast.innerHTML = `
-        <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white border-0">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
-            <button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    `;
+    var toast = document.createElement('div');
+    toast.className = 'toast show position-fixed bottom-0 end-0 m-3 bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white';
+    toast.innerHTML = '<div class="toast-header bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white border-0">' +
+        '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-triangle') + ' me-2"></i>' +
+        '<strong class="me-auto">' + (type === 'success' ? 'Success' : 'Error') + '</strong>' +
+        '<button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>' +
+        '</div><div class="toast-body">' + message + '</div>';
     document.body.appendChild(toast);
     
-    setTimeout(() => {
+    setTimeout(function() {
         if (toast.parentNode) {
             toast.remove();
         }
     }, 3000);
 }
-
-// Auto-refresh charts every 5 minutes
-setInterval(() => {
-    console.log('Auto-refreshing blockchain statistics...');
-    // You could implement automatic chart updates here
-}, 300000);
 </script>
 {% endblock %}

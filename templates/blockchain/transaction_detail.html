@@ -364,7 +364,7 @@
 {% block extra_scripts %}
 <script>
 // Transaction data for raw display and verification
-const transactionData = {
+var transactionData = {
     transaction_id: "{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}",
     transaction_type: "{{ transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' }}",
     product_id: {{ transaction_data.transaction.product_id if hasattr(transaction_data.transaction, 'product_id') and transaction_data.transaction.product_id else 'null' }},
@@ -384,7 +384,7 @@ const transactionData = {
     timestamp: "{{ transaction_data.block.timestamp }}"
 };
 
-const blockData = {
+var blockData = {
     index: {{ transaction_data.block_index }},
     hash: "{{ transaction_data.block.hash }}",
     previous_hash: "{{ transaction_data.block.previous_hash }}",
@@ -398,21 +398,21 @@ document.getElementById('transactionJsonData').textContent = JSON.stringify({
 }, null, 2);
 
 function copyTransactionData() {
-    const jsonData = JSON.stringify(transactionData, null, 2);
+    var jsonData = JSON.stringify(transactionData, null, 2);
     copyToClipboard(jsonData);
 }
 
 function downloadTransactionData() {
-    const jsonData = JSON.stringify({
+    var jsonData = JSON.stringify({
         transaction: transactionData,
         block: blockData
     }, null, 2);
     
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var blob = new Blob([jsonData], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `transaction_${transactionData.transaction_id}_data.json`;
+    a.download = 'transaction_' + transactionData.transaction_id + '_data.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -421,11 +421,11 @@ function downloadTransactionData() {
 }
 
 function verifyTransaction() {
-    const resultDiv = document.getElementById('verificationResult');
+    var resultDiv = document.getElementById('verificationResult');
     resultDiv.style.display = 'block';
     
     // Simple verification checks
-    const checks = {
+    var checks = {
         'Transaction ID exists': transactionData.transaction_id && transactionData.transaction_id !== 'N/A',
         'Block hash exists': blockData.hash && blockData.hash.length === 64,
         'Timestamp valid': blockData.timestamp && new Date(blockData.timestamp).getTime() > 0,
@@ -434,17 +434,19 @@ function verifyTransaction() {
         'Block index valid': blockData.index >= 0
     };
     
-    let html = '<div class="alert alert-info"><h6><i class="fas fa-shield-check me-2"></i>Transaction Verification Results:</h6><ul class="mb-0">';
+    var html = '<div class="alert alert-info"><h6><i class="fas fa-shield-check me-2"></i>Transaction Verification Results:</h6><ul class="mb-0">';
     
-    Object.entries(checks).forEach(([check, passed]) => {
-        const icon = passed ? 'fa-check text-success' : 'fa-times text-danger';
-        const status = passed ? 'PASS' : 'FAIL';
-        html += `<li><i class="fas ${icon} me-2"></i>${check}: <strong>${status}</strong></li>`;
+    Object.entries(checks).forEach(function(entry) {
+        var check = entry[0];
+        var passed = entry[1];
+        var icon = passed ? 'fa-check text-success' : 'fa-times text-danger';
+        var status = passed ? 'PASS' : 'FAIL';
+        html += '<li><i class="fas ' + icon + ' me-2"></i>' + check + ': <strong>' + status + '</strong></li>';
     });
     
     html += '</ul></div>';
     
-    const allPassed = Object.values(checks).every(check => check);
+    var allPassed = Object.values(checks).every(function(check) { return check; });
     if (allPassed) {
         html += '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><strong>Transaction is valid and verified!</strong></div>';
     } else {
@@ -467,21 +469,16 @@ function copyToClipboard(text) {
 }
 
 function showToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `toast show position-fixed bottom-0 end-0 m-3 bg-${type === 'success' ? 'success' : 'danger'} text-white`;
-    toast.innerHTML = `
-        <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white border-0">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
-            <button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    `;
+    var toast = document.createElement('div');
+    toast.className = 'toast show position-fixed bottom-0 end-0 m-3 bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white';
+    toast.innerHTML = '<div class="toast-header bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white border-0">' +
+        '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-triangle') + ' me-2"></i>' +
+        '<strong class="me-auto">' + (type === 'success' ? 'Success' : 'Error') + '</strong>' +
+        '<button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>' +
+        '</div><div class="toast-body">' + message + '</div>';
     document.body.appendChild(toast);
     
-    setTimeout(() => {
+    setTimeout(function() {
         if (toast.parentNode) {
             toast.remove();
         }

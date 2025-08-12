@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Network Status - Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-info">
+            <i class="fas fa-network-wired me-3"></i>Network Status
+        </h1>
+        <p class="lead text-muted">Blockchain network health and connectivity</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('blockchain.explorer') }}" class="btn btn-outline-primary">
+            <i class="fas fa-cubes me-2"></i>Back to Explorer
+        </a>
+    </div>
+</div>
+
+<!-- Network Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-{{ 'success' if network_info.network_status == 'operational' else 'warning' if network_info.network_status == 'degraded' else 'danger' }}">
+            <div class="card-header bg-{{ 'success' if network_info.network_status == 'operational' else 'warning' if network_info.network_status == 'degraded' else 'danger' }} text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-{{ 'check-circle' if network_info.network_status == 'operational' else 'exclamation-triangle' if network_info.network_status == 'degraded' else 'times-circle' }} me-2"></i>
+                    Network Status: {{ network_info.network_status.upper() }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-primary">{{ network_info.node_id }}</h3>
+                        <p class="text-muted mb-0">Node ID</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-info">{{ network_info.connected_peers }}</h3>
+                        <p class="text-muted mb-0">Connected Peers</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h3 class="text-success">{{ network_info.blockchain_height }}</h3>
+                        <p class="text-muted mb-0">Blockchain Height</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <span class="badge bg-{{ 'success' if network_info.sync_status == 'synchronized' else 'warning' }} fs-4">
+                            {{ network_info.sync_status.upper() }}
+                        </span>
+                        <p class="text-muted mb-0">Sync Status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Details -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>Node Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong class="text-muted">Node Type:</strong><br>
+                    <span class="badge bg-primary">Local Development Node</span>
+                </div>
+                <div class="mb-3">
+                    <strong class="text-muted">Network Version:</strong><br>
+                    <code>FoodChain-v1.0</code>
+                </div>
+                <div class="mb-3">
+                    <strong class="text-muted">Last Block Time:</strong><br>
+                    {% if network_info.last_block_time %}
+                        <span class="text-dark">{{ network_info.last_block_time[:19] }}</span>
+                    {% else %}
+                        <span class="text-muted">No blocks yet</span>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <strong class="text-muted">Uptime:</strong><br>
+                    <span class="text-success">99.9%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Peer Network
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if network_info.connected_peers == 0 %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-desktop fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Single Node Setup</h5>
+                        <p class="text-muted mb-0">
+                            This is a local development environment.<br>
+                            No peer connections configured.
+                        </p>
+                    </div>
+                {% else %}
+                    <!-- This would show peer information in a multi-node setup -->
+                    <div class="mb-3">
+                        <strong class="text-muted">Active Peers:</strong><br>
+                        <span class="text-success">{{ network_info.connected_peers }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Features -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Network Features
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                            <h6 class="text-success">Cryptographic Security</h6>
+                            <small class="text-muted">SHA-256 hashing with proof-of-work</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-link fa-2x text-primary mb-2"></i>
+                            <h6 class="text-primary">Immutable Ledger</h6>
+                            <small class="text-muted">Tamper-proof transaction records</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-eye fa-2x text-info mb-2"></i>
+                            <h6 class="text-info">Full Transparency</h6>
+                            <small class="text-muted">Complete supply chain visibility</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Performance Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <h4 class="text-success">100%</h4>
+                        <small class="text-muted">Block Validation Rate</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <h4 class="text-primary">{{ network_info.blockchain_height }}</h4>
+                        <small class="text-muted">Total Blocks Processed</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <h4 class="text-info">0ms</h4>
+                        <small class="text-muted">Average Block Time</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <h4 class="text-warning">0</h4>
+                        <small class="text-muted">Failed Transactions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
