@@ -9,7 +9,7 @@
             <i class="fas fa-exchange-alt me-3"></i>Transaction Details
         </h1>
         <p class="lead">
-            Transaction #<code>{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
+            Transaction #<code>{{ transaction_data.transaction.transaction_id if transaction_data.transaction.transaction_id is defined else 'N/A' }}</code>
         </p>
     </div>
     <div class="col-md-4 text-end">
@@ -37,11 +37,11 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <strong class="text-muted">Transaction ID:</strong><br>
-                        <code class="bg-light p-2 rounded d-block text-break">{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}</code>
+                        <code class="bg-light p-2 rounded d-block text-break">{{ transaction_data.transaction.transaction_id if transaction_data.transaction.transaction_id is defined else 'N/A' }}</code>
                     </div>
                     <div class="col-md-6 mb-3">
                         <strong class="text-muted">Type:</strong><br>
-                        {% set tx_type = transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' %}
+                        {% set tx_type = transaction_data.transaction.transaction_type if transaction_data.transaction.transaction_type is defined else 'unknown' %}
                         <span class="badge bg-{{ 'success' if tx_type == 'create' else 'primary' if tx_type == 'transfer' else 'info' }} fs-6">
                             <i class="fas fa-{{ 'plus' if tx_type == 'create' else 'exchange-alt' if tx_type == 'transfer' else 'question' }} me-2"></i>
                             {{ tx_type.title() }}
@@ -115,7 +115,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong class="text-muted">Quantity:</strong><br>
-                                <span class="text-dark">{{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else product.quantity }} {{ product.unit }}</span>
+                                <span class="text-dark">{{ transaction_data.transaction.quantity if transaction_data.transaction.quantity is defined and transaction_data.transaction.quantity else product.quantity }} {{ product.unit }}</span>
                             </div>
                         </div>
                     </div>
@@ -160,7 +160,7 @@
                         <div class="text-center">
                             <i class="fas fa-arrow-right fa-3x text-success mb-2"></i>
                             <br><strong class="text-success">TRANSFER</strong>
-                            {% if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity %}
+                            {% if transaction_data.transaction.quantity is defined and transaction_data.transaction.quantity %}
                                 <br><small class="text-muted">{{ transaction_data.transaction.quantity }} units</small>
                             {% endif %}
                         </div>
@@ -199,7 +199,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                {% if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location %}
+                {% if transaction_data.transaction.location is defined and transaction_data.transaction.location %}
                     <div class="mb-3">
                         <strong class="text-muted">Location:</strong><br>
                         <i class="fas fa-map-marker-alt text-info me-2"></i>
@@ -207,7 +207,7 @@
                     </div>
                 {% endif %}
                 
-                {% if hasattr(transaction_data.transaction, 'latitude') and hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.latitude and transaction_data.transaction.longitude %}
+                {% if transaction_data.transaction.latitude is defined and transaction_data.transaction.longitude is defined and transaction_data.transaction.latitude and transaction_data.transaction.longitude %}
                     <div class="mb-3">
                         <strong class="text-muted">Coordinates:</strong><br>
                         <i class="fas fa-globe me-2"></i>
@@ -215,7 +215,7 @@
                     </div>
                 {% endif %}
                 
-                {% if not ((hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location) or (hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude)) %}
+                {% if not ((transaction_data.transaction.location is defined and transaction_data.transaction.location) or (transaction_data.transaction.latitude is defined and transaction_data.transaction.latitude)) %}
                     <div class="text-center text-muted py-4">
                         <i class="fas fa-map fa-3x mb-3"></i>
                         <p class="mb-0">No location data recorded</p>
@@ -233,7 +233,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                {% if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none %}
+                {% if transaction_data.transaction.temperature is defined and transaction_data.transaction.temperature is not none %}
                     <div class="mb-3">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-thermometer-half fa-2x text-danger me-3"></i>
@@ -250,7 +250,7 @@
                     </div>
                 {% endif %}
                 
-                {% if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none %}
+                {% if transaction_data.transaction.humidity is defined and transaction_data.transaction.humidity is not none %}
                     <div class="mb-3">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-tint fa-2x text-info me-3"></i>
@@ -262,7 +262,7 @@
                     </div>
                 {% endif %}
                 
-                {% if not ((hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none) or (hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none)) %}
+                {% if not ((transaction_data.transaction.temperature is defined and transaction_data.transaction.temperature is not none) or (transaction_data.transaction.humidity is defined and transaction_data.transaction.humidity is not none)) %}
                     <div class="text-center text-muted py-4">
                         <i class="fas fa-thermometer-empty fa-3x mb-3"></i>
                         <p class="mb-0">No environmental data recorded</p>
@@ -284,14 +284,14 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    {% if hasattr(transaction_data.transaction, 'vehicle_id') and transaction_data.transaction.vehicle_id %}
+                    {% if transaction_data.transaction.vehicle_id is defined and transaction_data.transaction.vehicle_id %}
                         <div class="col-md-3 mb-3">
                             <strong class="text-muted">Vehicle ID:</strong><br>
                             <span class="badge bg-light text-dark">{{ transaction_data.transaction.vehicle_id }}</span>
                         </div>
                     {% endif %}
                     
-                    {% if hasattr(transaction_data.transaction, 'transport_method') and transaction_data.transaction.transport_method %}
+                    {% if transaction_data.transaction.transport_method is defined and transaction_data.transaction.transport_method %}
                         <div class="col-md-3 mb-3">
                             <strong class="text-muted">Transport Method:</strong><br>
                             <i class="fas fa-{{ 'truck' if transaction_data.transaction.transport_method == 'truck' else 'ship' if transaction_data.transaction.transport_method == 'ship' else 'plane' if transaction_data.transaction.transport_method == 'plane' else 'train' if transaction_data.transaction.transport_method == 'train' else 'shipping-fast' }} me-2"></i>
@@ -311,7 +311,7 @@
                     </div>
                 </div>
                 
-                {% if hasattr(transaction_data.transaction, 'notes') and transaction_data.transaction.notes %}
+                {% if transaction_data.transaction.notes is defined and transaction_data.transaction.notes %}
                     <div class="row mt-3">
                         <div class="col-12">
                             <strong class="text-muted">Notes:</strong><br>
@@ -326,51 +326,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-<!-- Hidden data for JavaScript -->
-<script id="transaction-data" type="application/json">
-{
-    "transaction_id": "{{ transaction_data.transaction.transaction_id if hasattr(transaction_data.transaction, 'transaction_id') else 'N/A' }}",
-    "transaction_type": "{{ transaction_data.transaction.transaction_type if hasattr(transaction_data.transaction, 'transaction_type') else 'unknown' }}",
-    "product_id": {{ transaction_data.transaction.product_id if hasattr(transaction_data.transaction, 'product_id') and transaction_data.transaction.product_id else 'null' }},
-    "from_user_id": {{ transaction_data.transaction.from_user_id if hasattr(transaction_data.transaction, 'from_user_id') and transaction_data.transaction.from_user_id else 'null' }},
-    "to_user_id": {{ transaction_data.transaction.to_user_id if hasattr(transaction_data.transaction, 'to_user_id') and transaction_data.transaction.to_user_id else 'null' }},
-    "quantity": {{ transaction_data.transaction.quantity if hasattr(transaction_data.transaction, 'quantity') and transaction_data.transaction.quantity else 'null' }},
-    "location": "{{ transaction_data.transaction.location if hasattr(transaction_data.transaction, 'location') and transaction_data.transaction.location else '' }}",
-    "latitude": {{ transaction_data.transaction.latitude if hasattr(transaction_data.transaction, 'latitude') and transaction_data.transaction.latitude else 'null' }},
-    "longitude": {{ transaction_data.transaction.longitude if hasattr(transaction_data.transaction, 'longitude') and transaction_data.transaction.longitude else 'null' }},
-    "temperature": {{ transaction_data.transaction.temperature if hasattr(transaction_data.transaction, 'temperature') and transaction_data.transaction.temperature is not none else 'null' }},
-    "humidity": {{ transaction_data.transaction.humidity if hasattr(transaction_data.transaction, 'humidity') and transaction_data.transaction.humidity is not none else 'null' }},
-    "block_index": {{ transaction_data.block_index }},
-    "block_hash": "{{ transaction_data.block.hash }}",
-    "timestamp": "{{ transaction_data.block.timestamp }}"
-}
-</script>
-
-{% block extra_scripts %}
-<script>
-// Get transaction data from JSON script tag
-var transactionData = JSON.parse(document.getElementById('transaction-data').textContent);
-
-// Simple functions without complex template interactions
-function showToast(message, type) {
-    var toast = document.createElement('div');
-    toast.className = 'toast show position-fixed bottom-0 end-0 m-3 bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white';
-    toast.innerHTML = '<div class="toast-header bg-' + (type === 'success' ? 'success' : 'danger') + ' text-white border-0">' +
-        '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-triangle') + ' me-2"></i>' +
-        '<strong class="me-auto">' + (type === 'success' ? 'Success' : 'Error') + '</strong>' +
-        '<button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>' +
-        '</div><div class="toast-body">' + message + '</div>';
-    document.body.appendChild(toast);
-    
-    setTimeout(function() {
-        if (toast.parentNode) {
-            toast.remove();
-        }
-    }, 3000);
-}
-
-console.log('Transaction data loaded:', transactionData);
-</script>
 {% endblock %}
