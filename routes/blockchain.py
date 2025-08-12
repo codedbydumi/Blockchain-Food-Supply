@@ -1,14 +1,14 @@
-# Add this to routes/blockchain.py (create new file)
-
 """
 Blockchain explorer routes for viewing blockchain data
 """
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from models.blockchain import food_chain_blockchain, get_blockchain_info
 from models.product import Product
 from models.user import User
+from models.blockchain import Transaction
+from models.database import db
 import json
 
 # Create blueprint for blockchain routes
@@ -26,12 +26,28 @@ def explorer():
     # Get blockchain info
     blockchain_info = get_blockchain_info()
     
-    # Get recent blocks (paginated)
+    # Get total blocks
     total_blocks = len(food_chain_blockchain.chain)
-    start_index = max(0, total_blocks - (page * per_page))
-    end_index = max(0, total_blocks - ((page - 1) * per_page))
     
-    blocks = list(reversed(food_chain_blockchain.chain[start_index:end_index]))
+    if total_blocks == 0:
+        return render_template('blockchain/explorer.html',
+                             blocks=[],
+                             blockchain_info=blockchain_info,
+                             page=page,
+                             per_page=per_page,
+                             has_prev=False,
+                             has_next=False,
+                             total_blocks=0)
+    
+    # Calculate pagination indices (reverse order - newest first)
+    start_index = max(0, total_blocks - (page * per_page))
+    end_index = min(total_blocks, total_blocks - ((page - 1) * per_page))
+    
+    # Get blocks in reverse order (newest first)
+    blocks = []
+    for i in range(end_index - 1, start_index - 1, -1):
+        if i >= 0 and i < len(food_chain_blockchain.chain):
+            blocks.append(food_chain_blockchain.chain[i])
     
     # Calculate pagination
     has_prev = page > 1
@@ -52,7 +68,7 @@ def view_block(index):
     """
     View detailed information about a specific block
     """
-    if index >= len(food_chain_blockchain.chain):
+    if index >= len(food_chain_blockchain.chain) or index < 0:
         flash('Block not found', 'danger')
         return redirect(url_for('blockchain.explorer'))
     
@@ -62,9 +78,18 @@ def view_block(index):
     enhanced_transactions = []
     for tx in block.transactions:
         # Get related product and users
-        product = Product.query.get(tx.product_id) if hasattr(tx, 'product_id') else None
-        from_user = User.query.get(tx.from_user_id) if hasattr(tx, 'from_user_id') else None
-        to_user = User.query.get(tx.to_user_id) if hasattr(tx, 'to_user_id') else None
+        product = None
+        from_user = None
+        to_user = None
+        
+        if hasattr(tx, 'product_id') and tx.product_id:
+            product = Product.query.get(tx.product_id)
+        
+        if hasattr(tx, 'from_user_id') and tx.from_user_id:
+            from_user = User.query.get(tx.from_user_id)
+            
+        if hasattr(tx, 'to_user_id') and tx.to_user_id:
+            to_user = User.query.get(tx.to_user_id)
         
         enhanced_transactions.append({
             'transaction': tx,
@@ -104,9 +129,18 @@ def view_transaction(transaction_id):
         return redirect(url_for('blockchain.explorer'))
     
     # Get related data
-    product = Product.query.get(transaction_data['transaction'].product_id) if hasattr(transaction_data['transaction'], 'product_id') else None
-    from_user = User.query.get(transaction_data['transaction'].from_user_id) if hasattr(transaction_data['transaction'], 'from_user_id') else None
-    to_user = User.query.get(transaction_data['transaction'].to_user_id) if hasattr(transaction_data['transaction'], 'to_user_id') else None
+    product = None
+    from_user = None
+    to_user = None
+    
+    if hasattr(transaction_data['transaction'], 'product_id') and transaction_data['transaction'].product_id:
+        product = Product.query.get(transaction_data['transaction'].product_id)
+    
+    if hasattr(transaction_data['transaction'], 'from_user_id') and transaction_data['transaction'].from_user_id:
+        from_user = User.query.get(transaction_data['transaction'].from_user_id)
+        
+    if hasattr(transaction_data['transaction'], 'to_user_id') and transaction_data['transaction'].to_user_id:
+        to_user = User.query.get(transaction_data['transaction'].to_user_id)
     
     return render_template('blockchain/transaction_detail.html',
                          transaction_data=transaction_data,
@@ -125,22 +159,23 @@ def verify_blockchain():
     # Get detailed verification results
     verification_results = []
     
-    for i, block in enumerate(food_chain_blockchain.chain[1:], 1):  # Skip genesis block
-        prev_block = food_chain_blockchain.chain[i - 1]
-        
-        # Check if block hash is valid
-        block_valid = block.hash == block.calculate_hash()
-        
-        # Check if previous hash matches
-        prev_hash_valid = block.previous_hash == prev_block.hash
-        
-        verification_results.append({
-            'index': i,
-            'block': block,
-            'is_valid': block_valid and prev_hash_valid,
-            'block_hash_valid': block_valid,
-            'prev_hash_valid': prev_hash_valid
-        })
+    if len(food_chain_blockchain.chain) > 1:
+        for i, block in enumerate(food_chain_blockchain.chain[1:], 1):  # Skip genesis block
+            prev_block = food_chain_blockchain.chain[i - 1]
+            
+            # Check if block hash is valid
+            block_valid = block.hash == block.calculate_hash()
+            
+            # Check if previous hash matches
+            prev_hash_valid = block.previous_hash == prev_block.hash
+            
+            verification_results.append({
+                'index': i,
+                'block': block,
+                'is_valid': block_valid and prev_hash_valid,
+                'block_hash_valid': block_valid,
+                'prev_hash_valid': prev_hash_valid
+            })
     
     return render_template('blockchain/verification.html',
                          is_valid=is_valid,
@@ -152,20 +187,24 @@ def blockchain_stats():
     """
     Blockchain statistics and analytics
     """
+    chain = food_chain_blockchain.chain
+    
     stats = {
-        'total_blocks': len(food_chain_blockchain.chain),
-        'total_transactions': sum(len(block.transactions) for block in food_chain_blockchain.chain),
-        'chain_size': sum(len(str(block)) for block in food_chain_blockchain.chain),
+        'total_blocks': len(chain),
+        'total_transactions': sum(len(block.transactions) for block in chain),
+        'chain_size_bytes': sum(len(str(block)) for block in chain),
         'average_block_size': 0,
-        'mining_difficulty': food_chain_blockchain.difficulty if hasattr(food_chain_blockchain, 'difficulty') else 2,
+        'mining_difficulty': getattr(food_chain_blockchain, 'difficulty', 2),
+        'genesis_timestamp': chain[0].timestamp if chain else None,
+        'latest_timestamp': chain[-1].timestamp if chain else None
     }
     
     if stats['total_blocks'] > 0:
-        stats['average_block_size'] = stats['chain_size'] / stats['total_blocks']
+        stats['average_block_size'] = stats['chain_size_bytes'] / stats['total_blocks']
     
     # Transaction types distribution
     tx_types = {}
-    for block in food_chain_blockchain.chain:
+    for block in chain:
         for tx in block.transactions:
             tx_type = getattr(tx, 'transaction_type', 'unknown')
             tx_types[tx_type] = tx_types.get(tx_type, 0) + 1
@@ -174,14 +213,37 @@ def blockchain_stats():
     from datetime import datetime, timedelta
     daily_volumes = {}
     
-    for block in food_chain_blockchain.chain:
-        block_date = datetime.fromisoformat(block.timestamp).date()
-        daily_volumes[block_date] = daily_volumes.get(block_date, 0) + len(block.transactions)
+    for block in chain:
+        try:
+            if block.timestamp:
+                # Handle different timestamp formats
+                if isinstance(block.timestamp, str):
+                    # Try parsing ISO format
+                    try:
+                        block_date = datetime.fromisoformat(block.timestamp.replace('Z', '+00:00')).date()
+                    except ValueError:
+                        # Try other common formats
+                        try:
+                            block_date = datetime.strptime(block.timestamp[:19], '%Y-%m-%d %H:%M:%S').date()
+                        except ValueError:
+                            continue
+                else:
+                    block_date = block.timestamp.date()
+                    
+                daily_volumes[block_date.isoformat()] = daily_volumes.get(block_date.isoformat(), 0) + len(block.transactions)
+        except:
+            continue
+    
+    # Block size distribution
+    block_sizes = []
+    for block in chain:
+        block_sizes.append(len(str(block)))
     
     return render_template('blockchain/stats.html',
                          stats=stats,
                          tx_types=tx_types,
-                         daily_volumes=daily_volumes)
+                         daily_volumes=daily_volumes,
+                         block_sizes=block_sizes)
 
 @blockchain_bp.route('/api/search')
 @login_required
@@ -200,36 +262,101 @@ def api_search():
         'products': []
     }
     
-    # Search blocks by hash
-    for i, block in enumerate(food_chain_blockchain.chain):
-        if query.lower() in block.hash.lower():
-            results['blocks'].append({
-                'index': i,
-                'hash': block.hash,
-                'timestamp': block.timestamp,
-                'transaction_count': len(block.transactions)
+    try:
+        # Search blocks by hash
+        for i, block in enumerate(food_chain_blockchain.chain):
+            if query.lower() in block.hash.lower() or str(i) == query:
+                results['blocks'].append({
+                    'index': i,
+                    'hash': block.hash,
+                    'timestamp': block.timestamp,
+                    'transaction_count': len(block.transactions)
+                })
+        
+        # Search transactions
+        for i, block in enumerate(food_chain_blockchain.chain):
+            for tx in block.transactions:
+                tx_id = getattr(tx, 'transaction_id', None)
+                product_id = getattr(tx, 'product_id', None)
+                
+                if (tx_id and query in str(tx_id)) or (product_id and query in str(product_id)):
+                    results['transactions'].append({
+                        'transaction_id': tx_id or 'N/A',
+                        'product_id': product_id or 'N/A',
+                        'block_index': i,
+                        'type': getattr(tx, 'transaction_type', 'unknown')
+                    })
+        
+        # Search products by batch ID or name
+        products = Product.query.filter(
+            (Product.batch_id.contains(query)) | 
+            (Product.name.contains(query))
+        ).limit(10).all()
+        
+        for product in products:
+            results['products'].append({
+                'id': product.id,
+                'name': product.name,
+                'batch_id': product.batch_id,
+                'category': product.category
             })
     
-    # Search transactions
-    for i, block in enumerate(food_chain_blockchain.chain):
-        for tx in block.transactions:
-            if (hasattr(tx, 'transaction_id') and query in str(tx.transaction_id)) or \
-               (hasattr(tx, 'product_id') and query in str(tx.product_id)):
-                results['transactions'].append({
-                    'transaction_id': getattr(tx, 'transaction_id', 'N/A'),
-                    'product_id': getattr(tx, 'product_id', 'N/A'),
-                    'block_index': i,
-                    'type': getattr(tx, 'transaction_type', 'unknown')
-                })
-    
-    # Search products by batch ID
-    products = Product.query.filter(Product.batch_id.contains(query)).all()
-    for product in products:
-        results['products'].append({
-            'id': product.id,
-            'name': product.name,
-            'batch_id': product.batch_id,
-            'category': product.category
-        })
+    except Exception as e:
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
     
     return jsonify(results)
+
+@blockchain_bp.route('/api/block/<int:index>')
+@login_required
+def api_block_detail(index):
+    """
+    API endpoint for block details
+    """
+    if index >= len(food_chain_blockchain.chain) or index < 0:
+        return jsonify({'error': 'Block not found'}), 404
+    
+    block = food_chain_blockchain.chain[index]
+    
+    # Convert block to dictionary
+    block_data = {
+        'index': block.index,
+        'hash': block.hash,
+        'previous_hash': block.previous_hash,
+        'timestamp': block.timestamp,
+        'nonce': getattr(block, 'nonce', 0),
+        'transactions': []
+    }
+    
+    # Add transaction data
+    for tx in block.transactions:
+        tx_data = {
+            'transaction_id': getattr(tx, 'transaction_id', None),
+            'transaction_type': getattr(tx, 'transaction_type', 'unknown'),
+            'product_id': getattr(tx, 'product_id', None),
+            'from_user_id': getattr(tx, 'from_user_id', None),
+            'to_user_id': getattr(tx, 'to_user_id', None),
+            'quantity': getattr(tx, 'quantity', None),
+            'location': getattr(tx, 'location', None),
+            'temperature': getattr(tx, 'temperature', None),
+            'humidity': getattr(tx, 'humidity', None)
+        }
+        block_data['transactions'].append(tx_data)
+    
+    return jsonify(block_data)
+
+@blockchain_bp.route('/network')
+@login_required
+def network_status():
+    """
+    Show blockchain network status and peers (for future multi-node support)
+    """
+    network_info = {
+        'node_id': 'local-node-001',  # This would be dynamic in a real network
+        'network_status': 'operational',
+        'connected_peers': 0,  # No peers in local setup
+        'sync_status': 'synchronized',
+        'last_block_time': food_chain_blockchain.chain[-1].timestamp if food_chain_blockchain.chain else None,
+        'blockchain_height': len(food_chain_blockchain.chain)
+    }
+    
+    return render_template('blockchain/network.html', network_info=network_info)
